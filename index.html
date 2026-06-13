@@ -1,0 +1,2189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EdMetric Standard Setting — Panelist App</title>
+<style>
+  :root{
+    --dark-green:#1A5025;--med-green:#124B21;--light-green:#E8F0E8;--border:#BBCABB;
+    --body:#333;--muted:#8a948a;--white:#fff;--bg:#EEF2EE;--warn-bg:#FFF6E0;--warn-bd:#E8C45A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Verdana,Geneva,sans-serif;color:var(--body);background:#dfe6df;font-size:14px;line-height:1.5}
+  .topbar{background:var(--dark-green);color:#fff;display:flex;align-items:center;padding:0 18px;height:60px;border-bottom:4px solid var(--med-green)}
+  .logo{width:36px;height:36px;border-radius:8px;background:#fff;color:var(--dark-green);display:flex;align-items:center;justify-content:center;font-family:"Arial Black";font-size:13px;margin-right:12px}
+  .wstitle{font-family:"Arial Black",Arial;font-size:15px;line-height:1.1}
+  .wstitle small{display:block;font-family:Verdana;font-weight:normal;font-size:11px;color:#c7dcc7}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:12.5px}
+  .avatar{width:30px;height:30px;border-radius:50%;background:#cfe0cf;color:var(--dark-green);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px}
+  .modeToggle{display:flex;background:#0e3a18;border-radius:8px;overflow:hidden;border:1px solid #2c5a38}
+  .modeToggle button{background:none;border:0;color:#bcd3bc;padding:7px 13px;cursor:pointer;font-family:Verdana;font-size:12px}
+  .modeToggle button.on{background:#fff;color:var(--dark-green);font-weight:bold}
+  .layout{display:flex;min-height:calc(100vh - 60px)}
+  .side{width:220px;flex:0 0 220px;background:#fff;border-right:1px solid var(--border);padding:14px 0}
+  .side a{display:flex;align-items:center;gap:11px;padding:11px 18px;color:var(--body);cursor:pointer;border-left:4px solid transparent;font-size:13.5px}
+  .side a:hover{background:var(--light-green)}
+  .side a.active{background:var(--light-green);border-left-color:var(--dark-green);color:var(--dark-green);font-weight:bold}
+  .side a.locked{opacity:.45;cursor:not-allowed}
+  .side a .lockic{margin-left:auto;font-size:12px}
+  .side a .ic{width:18px;text-align:center}
+  .content{flex:1;padding:26px 34px;max-width:900px}
+  h2.h{font-family:"Arial Black",Arial;color:var(--dark-green);font-size:20px;margin:0 0 4px;padding-bottom:8px;border-bottom:3px solid var(--dark-green)}
+  .lede{color:#555;margin:0 0 20px;max-width:660px}
+  .card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+  .card h3{margin:0 0 10px;font-family:"Arial Black";font-size:13px;color:var(--med-green);text-transform:uppercase;letter-spacing:.5px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--border);font-size:13.5px}
+  .kv:last-child{border:0}.kv b{color:var(--med-green)}
+  .stepper{display:flex;gap:6px;margin:6px 0 4px;flex-wrap:wrap}
+  .step{flex:1;min-width:70px;text-align:center;font-size:11.5px;color:var(--muted)}
+  .step .bub{height:30px;width:30px;border-radius:50%;margin:0 auto 5px;background:#fff;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--muted)}
+  .step.done .bub{background:#2E7D46;border-color:#2E7D46;color:#fff}
+  .step.cur .bub{background:var(--dark-green);border-color:var(--dark-green);color:#fff;box-shadow:0 0 0 4px var(--light-green)}
+  .step.done,.step.cur{color:var(--dark-green);font-weight:bold}
+  .cta{display:inline-block;background:var(--dark-green);color:#fff;border:0;border-radius:8px;padding:11px 20px;font-family:Verdana;font-size:14px;font-weight:bold;cursor:pointer;margin:4px 6px 0 0}
+  .cta:hover{background:var(--med-green)}
+  .cta.ghost{background:#fff;color:var(--dark-green);border:1px solid var(--dark-green)}
+  .cta.small{padding:7px 13px;font-size:12.5px}
+  .lvl{border-radius:10px;color:#fff;padding:14px 16px;margin-bottom:12px}
+  .lvl h4{margin:0 0 6px;font-family:"Arial Black";font-size:15px;display:flex;align-items:center;gap:10px}
+  .lvl .pill{background:rgba(255,255,255,.25);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:normal;font-family:Verdana}
+  .lvl p{margin:0;font-size:13px;color:rgba(255,255,255,.95)}
+  .cuts{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .cutbtn{border:1px solid var(--border);background:#fff;border-radius:20px;padding:7px 14px;cursor:pointer;font-size:12.5px;display:flex;align-items:center;gap:7px}
+  .cutbtn .sw{width:12px;height:12px;border-radius:3px}
+  .cutbtn.active{border-color:var(--dark-green);background:var(--light-green);font-weight:bold;color:var(--dark-green)}
+  .oib{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff}
+  .oib .hd,.oib .row{display:grid;grid-template-columns:46px 1fr 64px 60px 130px;align-items:center}
+  .oib .hd{background:var(--dark-green);color:#fff;font-size:11.5px;font-weight:bold;padding:9px 12px}
+  .oib .row{padding:9px 12px;border-top:1px solid #eef1ee;cursor:pointer;font-size:13px}
+  .oib .row:hover{background:var(--light-green)}
+  .oib .row .pos{font-weight:bold;color:var(--med-green)}
+  .oib .row .place{justify-self:end;font-size:11.5px;color:var(--dark-green);border:1px dashed var(--dark-green);border-radius:6px;padding:3px 8px;opacity:0}
+  .oib .row:hover .place{opacity:1}
+  .bandmark{height:3px;background:repeating-linear-gradient(90deg,var(--dark-green) 0 10px,transparent 10px 18px);position:relative}
+  .bandmark span{position:absolute;right:12px;top:-9px;background:var(--dark-green);color:#fff;font-size:10.5px;padding:1px 8px;border-radius:10px}
+  .legend{font-size:12px;color:var(--muted);margin-top:8px}
+  .q{margin-bottom:18px}
+  .q label.ql{display:block;font-weight:bold;color:var(--med-green);margin-bottom:7px;font-size:13.5px}
+  .opt{display:block;border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:7px;cursor:pointer;font-size:13.5px}
+  .opt:hover{background:var(--light-green)}.opt input{accent-color:var(--dark-green);margin-right:9px}
+  .opt.sel{border-color:var(--dark-green);background:var(--light-green)}
+  textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px;font-family:Verdana;font-size:13.5px;resize:vertical;min-height:74px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:10px 12px;text-align:center;border:1px solid var(--border)}
+  th{background:var(--dark-green);color:#fff;font-size:12px}
+  tbody tr:nth-child(even){background:var(--light-green)}
+  td.you{font-weight:bold;color:var(--med-green)}
+  .tag{display:inline-block;font-size:11px;border-radius:10px;padding:1px 9px;color:#fff}
+  .callout{background:var(--light-green);border-left:4px solid var(--dark-green);border-radius:6px;padding:11px 14px;font-size:13px;margin:14px 0}
+  .locked{background:#f6f8f6;border:1px dashed var(--border);border-radius:10px;padding:34px;text-align:center;color:var(--muted)}
+  .locked .lk{font-size:34px;margin-bottom:8px}
+  .new{background:#C9A227;color:#3a2f06;font-size:10px;font-weight:bold;border-radius:10px;padding:1px 8px;margin-left:8px;vertical-align:middle}
+  /* facilitator config */
+  .fld{margin-bottom:12px}
+  .fld label{display:block;font-size:12px;color:var(--med-green);font-weight:bold;margin-bottom:4px}
+  .fld input[type=text],.fld input[type=number],.fld select{width:100%;border:1px solid var(--border);border-radius:7px;padding:9px;font-family:Verdana;font-size:13.5px}
+  .lvlrow{display:grid;grid-template-columns:30px 1fr 1fr 46px 30px;gap:8px;align-items:center;margin-bottom:8px}
+  .lvlrow input[type=color]{width:46px;height:34px;border:1px solid var(--border);border-radius:6px;padding:2px;background:#fff}
+  .lvlrow .rm{background:#fff;border:1px solid var(--border);border-radius:6px;cursor:pointer;height:34px}
+  .lvlrow .rm:hover{background:#fde8e8;border-color:#d99}
+  .switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px}
+  .switch .track{width:46px;height:26px;border-radius:20px;background:#cfd8cf;position:relative;transition:.2s}
+  .switch .track .knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .switch.on .track{background:var(--dark-green)}.switch.on .track .knob{left:23px}
+  .bar-chart{display:flex;align-items:flex-end;gap:18px;height:170px;padding:12px 6px;border-bottom:2px solid var(--border)}
+  .bar-chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bar-chart .b{width:60%;border-radius:6px 6px 0 0;display:flex;align-items:flex-start;justify-content:center;color:#fff;font-size:11px;font-weight:bold;padding-top:4px}
+  .bar-chart .cap{font-size:11px;color:var(--muted);margin-top:6px;text-align:center}
+  .hintbar{background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:8px;padding:9px 13px;font-size:12.5px;color:#7a611a;margin-bottom:14px}
+  /* login + role gating */
+  .login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1A5025,#124B21)}
+  .loginbox{background:#fff;border-radius:14px;padding:32px 34px;width:374px;box-shadow:0 14px 40px rgba(0,0,0,.3)}
+  .loginbox .lg{width:54px;height:54px;border-radius:12px;background:var(--dark-green);color:#fff;display:flex;align-items:center;justify-content:center;font-family:"Arial Black";font-size:18px;margin:0 auto 14px}
+  .loginbox h1{font-family:"Arial Black";color:var(--dark-green);font-size:18px;text-align:center;margin:0 0 4px}
+  .loginbox .sub{text-align:center;color:var(--muted);font-size:12.5px;margin-bottom:18px}
+  .loginbox label{font-size:12px;color:var(--med-green);font-weight:bold;display:block;margin:12px 0 5px}
+  .loginbox input{width:100%;border:1px solid var(--border);border-radius:8px;padding:11px;font-family:Verdana;font-size:14px}
+  .roleseg{display:flex;background:var(--light-green);border-radius:9px;overflow:hidden;border:1px solid var(--border)}
+  .roleseg button{flex:1;background:none;border:0;padding:9px;cursor:pointer;font-family:Verdana;font-size:13px;color:var(--med-green)}
+  .roleseg button.on{background:var(--dark-green);color:#fff;font-weight:bold}
+  .note{background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:8px;padding:10px 13px;font-size:12px;margin-top:16px;color:#7a611a}
+  .out{color:#cfe0cf;cursor:pointer;border:1px solid #4f7a59;border-radius:6px;padding:5px 10px;font-size:12px}
+  .out:hover{background:#0e3a18}
+  /* OIB review + item map */
+  .reviewbar{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .reviewbar .prog{flex:1;font-size:12.5px;color:var(--muted)}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .meta .chip{background:var(--light-green);border:1px solid var(--border);border-radius:16px;padding:3px 11px;font-size:11.5px;color:var(--med-green)}
+  .meta .chip b{color:var(--dark-green)}
+  .itemstem{font-size:15px;color:#222;margin:0 0 14px;line-height:1.55}
+  .opts2{list-style:none;margin:0;padding:0}
+  .opts2 li{border:1px solid var(--border);border-radius:8px;padding:9px 13px;margin-bottom:7px;font-size:13.5px;background:#fafcfa}
+  .opts2 li .ol{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--light-green);color:var(--med-green);text-align:center;line-height:22px;font-size:12px;font-weight:bold;margin-right:9px}
+  .imgbox{border:1px dashed var(--border);border-radius:10px;padding:8px;text-align:center;background:#fafcfa}
+  .imgbox img{max-width:100%;border-radius:6px}
+  .imgmiss{padding:30px;color:var(--muted);font-size:13px}
+  .hiddenbox{background:#f6f8f6;border:1px dashed var(--border);border-radius:10px;padding:26px;text-align:center;color:#5d6b5d}
+  .hiddenbox .lk{font-size:30px;margin-bottom:8px}
+  .qbox{margin-top:18px}
+  .qbox .qh{font-weight:bold;color:var(--med-green);font-size:13.5px;margin:0 0 6px}
+  .answered{background:#2E7D46;color:#fff;font-size:10px;font-weight:bold;border-radius:10px;padding:1px 8px;margin-left:8px}
+  .pending{background:#e7ece7;color:#7a857a;font-size:10px;font-weight:bold;border-radius:10px;padding:1px 8px;margin-left:8px}
+  .imrow{cursor:pointer}
+  .imrow:hover{background:var(--light-green)!important}
+  .acc{border:1px solid var(--border);border-radius:9px;margin-bottom:10px;overflow:hidden;background:#fff}
+  .acc>.ah{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;font-size:13.5px}
+  .acc>.ah:hover{background:var(--light-green)}
+  .acc>.ah .cnt{margin-left:auto;font-size:11.5px;color:var(--muted)}
+  .acc .ab{padding:0 14px 12px;display:none}
+  .acc.open .ab{display:block}
+  .resp{border-top:1px solid #eef1ee;padding:10px 0;font-size:13px}
+  .resp .who{font-weight:bold;color:var(--med-green);font-size:12px}
+  .resp .ql2{color:#888;font-size:11.5px;margin-top:5px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login">
+  <div class="loginbox">
+    <div class="lg" id="loginLogo">EM</div>
+    <h1 id="loginTitle">Standard Setting</h1>
+    <div class="sub" id="loginSub">Sign in to begin</div>
+    <div class="roleseg" id="roleSeg">
+      <button id="roleP" class="on" onclick="pickRole('panelist')">Panelist</button>
+      <button id="roleF" onclick="pickRole('facilitator')">Facilitator</button>
+    </div>
+    <label>Email</label><input id="liEmail" placeholder="you@example.org">
+    <label>Password</label><input id="liPass" type="password" placeholder="Your password">
+    <button class="cta" style="width:100%;margin-top:18px" onclick="doLogin()">Sign in</button>
+    <div id="magicWrap" style="margin-top:14px;text-align:center">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">No password? Enter your email above and</div>
+      <button class="cta ghost" style="width:100%" onclick="emailMeALink()">Email me a sign-in link</button>
+    </div>
+    <div class="note" id="loginNote"></div>
+  </div>
+</div>
+
+<div id="appShell" style="display:none">
+<div class="topbar">
+  <div class="logo" id="logo">EM</div>
+  <div class="wstitle" id="wstitle"></div>
+  <div class="right">
+    <div class="modeToggle" id="modeToggle">
+      <button id="mAdmin" onclick="setMode('admin')">Admin</button>
+      <button id="mGroupFac" onclick="setMode('groupfac')">Group&nbsp;fac.</button>
+      <button id="mPanelist" class="on" onclick="setMode('panelist')">Panelist</button>
+    </div>
+    <span class="out" id="refreshBtn" onclick="refreshNow()" title="Reload the latest data">↻ Refresh</span>
+    <span class="out" id="pwBtn" onclick="goView('pw')" title="Change your password">Password</span>
+    <span class="avatar" id="avatar">CW</span>
+    <span class="out" onclick="signOut()">Sign out</span>
+  </div>
+</div>
+<div class="layout">
+  <div class="side" id="side"></div>
+  <div class="content" id="content"></div>
+</div>
+</div><!-- /appShell -->
+
+<!-- Libraries are served locally so a blocked CDN (school/office networks) can't break login. CDN is a fallback only. -->
+<script src="vendor/supabase.js"></script>
+<script>window.supabase||document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');</script>
+<!-- The Excel library (~880KB) is loaded on demand (facilitator import/export only), so panelists don't download it. -->
+<script src="supabase-config.js"></script>
+<script src="config.js"></script>
+<script src="oib.js"></script>
+<script>
+/* ---------- state ---------- */
+const LS_KEY="ss_project_state";
+let cfg = loadCfg();
+let mode="panelist";
+let view="home";
+let activeCut=1;
+let bookmarks={};       // cut index -> page
+let surveyState={q1:null};
+let answers={};             // pos -> {measures, harder}  (this panelist's OIB notes)
+let visited={};             // pos -> true (items the panelist has opened)
+let reviewIdx=0;            // current item in the Review OIB step
+let userRole=null;          // 'panelist' | 'facilitator' — set at login
+let selectedRole='panelist';// role chosen on the login screen (local mode only)
+
+/* ---------- Supabase ---------- */
+const SB = (window.SUPABASE_CONFIG && window.supabase)
+  ? window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.publishableKey)
+  : null;
+const USE_SB = !!SB;
+// Load the Excel library only when a facilitator actually needs it (import or export)
+let _xlsxPromise=null;
+function ensureXLSX(){
+  if(window.XLSX) return Promise.resolve(true);
+  if(_xlsxPromise) return _xlsxPromise;
+  _xlsxPromise=new Promise((res,rej)=>{
+    const tryLoad=(src,next)=>{ const s=document.createElement('script'); s.src=src; s.onload=()=>res(true); s.onerror=next; document.head.appendChild(s); };
+    tryLoad('vendor/xlsx.full.min.js', ()=> tryLoad('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js', ()=>rej(new Error('Could not load the Excel library.'))));
+  });
+  return _xlsxPromise;
+}
+let myPanelistId=null, posToItemId={}, sbRollup=null, sbPanelistCount=null, sbMedians={}, sbDist={}, sbPanelists=[], editingId=null;
+let sbTableMed={};         // table_no -> cut_number -> {median_scale,n} for the viewed round
+let myRoundCuts={};        // round -> cut_number -> item_pos (this panelist, all rounds)
+let carriedForward=false;  // this round's cuts are suggestions from last round, not yet confirmed/saved
+let currentGroupId=null;   // the active room context
+let currentFormId=null;    // the active form (per-grade booklet) within the room
+let viewRound=null;        // facilitator: which round's results to view (defaults to current)
+function isAdmin(){return userRole==='admin'||userRole==='facilitator';}     // legacy 'facilitator' = admin
+function isGroupFac(){return userRole==='group_facilitator';}
+function isFacRole(){return isAdmin()||isGroupFac();}
+function vRound(){return (isFacRole()&&viewRound)?viewRound:(cfg.currentRound||1);}  // round whose results are displayed
+let ansTimer={};
+function wid(){return window.SUPABASE_CONFIG.workshopId;}
+
+function loadCfg(){
+  const saved=localStorage.getItem(LS_KEY);
+  if(saved){try{ const c=JSON.parse(saved);
+      // booklet labels (e.g., the RP label) aren't editable in-app — always take them from the file
+      if(window.WORKSHOP_CONFIG&&window.WORKSHOP_CONFIG.booklet){ c.booklet=Object.assign({},c.booklet||{},{rpLabel:window.WORKSHOP_CONFIG.booklet.rpLabel}); }
+      return c;
+    }catch(e){}}
+  return JSON.parse(JSON.stringify(window.WORKSHOP_CONFIG));
+}
+function persist(){try{localStorage.setItem(LS_KEY,JSON.stringify(cfg));}catch(e){}}
+const PROG_KEY="ss_panelist_progress";
+function saveProgress(){try{localStorage.setItem(PROG_KEY,JSON.stringify({answers,bookmarks,surveyState,visited}));}catch(e){}}
+function loadProgress(){try{const s=localStorage.getItem(PROG_KEY);if(s){const o=JSON.parse(s);if(o.answers)answers=o.answers;if(o.bookmarks)bookmarks=o.bookmarks;if(o.surveyState)surveyState=o.surveyState;if(o.visited)visited=o.visited;}}catch(e){}}
+function saveAnswers(){saveProgress();}
+function storageOK(){try{const k="__ss_test";localStorage.setItem(k,"1");localStorage.removeItem(k);return true;}catch(e){return false;}}
+const STORAGE_OK=storageOK();
+const OIB_KEY="ss_oib_items";
+function loadOIB(){try{const s=localStorage.getItem(OIB_KEY);if(s){const a=JSON.parse(s);if(Array.isArray(a)&&a.length)return a;}}catch(e){}return (window.OIB_ITEMS||[]).map(x=>x);}
+function saveOIB(){try{localStorage.setItem(OIB_KEY,JSON.stringify(oib));}catch(e){}}
+let oib=loadOIB();
+function nCuts(){return cfg.levels.length-1;}
+
+/* Ordered item booklet: items come from oib.js when present (real data),
+   otherwise fall back to a generated placeholder booklet. */
+function items(){
+  if(oib && oib.length) return oib;
+  const out=[];const {firstPage,lastPage,step}=cfg.booklet;let pos=1;
+  for(let p=firstPage;p<=lastPage;p+=step){out.push({pos,page:p,strand:"",scorePoint:"1/1",itemType:"",pval:"",brief:"Item "+pos,display:{mode:"hidden"}});pos++;}
+  return out;
+}
+function itemCount(){return items().length;}
+function itemAt(pos){return items().find(i=>i.pos===pos);}
+
+/* cuts start UNPLACED — a cut appears only after the panelist places it */
+function initBookmarks(){
+  bookmarks={};
+  for(let c=1;c<=nCuts();c++) bookmarks[c]=null;
+}
+
+/* ---------- header ---------- */
+function paintHeader(){
+  document.getElementById('logo').textContent=cfg.clientInitials||"EM";
+  document.getElementById('wstitle').innerHTML=cfg.workshopTitle+"<small>"+cfg.subtitle+"</small>";
+  const init=(cfg.panelistName||"").split(" ").map(s=>s[0]).join("").slice(0,2).toUpperCase();
+  document.getElementById('avatar').textContent=init||"--";
+}
+
+/* ---------- nav ---------- */
+const PANELIST_NAV=[
+  {k:"home",ic:"⌂",t:"Home"},
+  {k:"ald",ic:"☰",t:"Achievement Levels"},
+  {k:"review",ic:"▦",t:"Review Items (OIB)"},
+  {k:"itemmap",ic:"☷",t:"Item Map"},
+  {k:"survey",ic:"✎",t:"Round Survey"},
+  {k:"bookmark",ic:"▤",t:"Place Bookmarks"},
+  {k:"cuts",ic:"⚑",t:"My Cut Scores"}
+];
+const FAC_NAV=[
+  {k:"overview",ic:"◳",t:"Dashboard"},
+  {k:"setup",ic:"⚙",t:"Workshop Setup"},
+  {k:"groups",ic:"⊞",t:"Groups (rooms)"},
+  {k:"people",ic:"☻",t:"Panelists"},
+  {k:"oibmgr",ic:"▤",t:"OIB / Items"},
+  {k:"progress",ic:"◷",t:"Panel progress"},
+  {k:"responses",ic:"▦",t:"Item Responses"},
+  {k:"release",ic:"⚑",t:"Results & Release"},
+  {k:"reports",ic:"⤓",t:"Reports & Export"}
+];
+function renderSide(){
+  const nav = mode==='panelist' ? PANELIST_NAV
+            : mode==='groupfac' ? FAC_NAV.filter(n=>n.k==='progress'||n.k==='responses'||n.k==='release')
+            : FAC_NAV;
+  document.getElementById('side').innerHTML=nav.map(n=>{
+    const locked = mode==='panelist' && isLocked(n.k);
+    const cls=[n.k===view?'active':'', locked?'locked':''].join(' ').trim();
+    const click = locked? `lockedMsg('${n.k}')` : `goView('${n.k}')`;
+    const tail = locked? '<span class="lockic">🔒</span>' : '';
+    return `<a class="${cls}" onclick="${click}"><span class="ic">${n.ic}</span><span>${n.t}</span>${tail}</a>`;
+  }).join('');
+}
+/* ---- sequential gating: Review (all items) -> Survey -> Bookmarks -> My Cut Scores ---- */
+function reviewComplete(){
+  const its=items();
+  if(cfg.requireOIBComplete===false) return its.every(it=>visited[it.pos]);
+  return its.every(it=>{const a=answers[it.pos];return a&&a.measures&&a.measures.trim()&&a.harder&&a.harder.trim();});
+}
+function surveyComplete(){return surveyState.q1!=null;}
+function bookmarksComplete(){for(let c=1;c<=nCuts();c++){if(bookmarks[c]==null)return false;}return true;}
+function isLocked(k){
+  if(isFacRole()) return false;   // facilitators/admins previewing the panelist view are never gated
+  if(k==='survey')   return !reviewComplete();
+  if(k==='bookmark') return !(reviewComplete()&&surveyComplete());
+  if(k==='cuts')     return !(reviewComplete()&&surveyComplete()&&bookmarksComplete());
+  return false;
+}
+/* panelists can't edit once this round's results are released, or the booklet is closed */
+function panelEditLocked(){
+  if(userRole!=='panelist') return false;
+  if(cfg.formStatus==='closed') return 'closed';
+  if(cfg.resultsReleased)       return 'released';
+  return false;
+}
+function editLockMsg(reason){
+  return reason==='closed'
+    ? 'This booklet is closed. You can view it, but changes are no longer allowed.'
+    : 'Results for this round have been released — your cut scores are now locked.';
+}
+/* panelist: their own cut positions across earlier rounds */
+function prevRoundsCard(){
+  if(!USE_SB) return '';
+  const rounds=Object.keys(myRoundCuts||{}).map(Number).filter(r=>r<cfg.currentRound).sort((a,b)=>a-b);
+  if(!rounds.length) return '';
+  let head='<th style="text-align:left">Cut</th>'+rounds.map(r=>'<th>R'+r+'</th>').join('')+'<th>R'+cfg.currentRound+' (now)</th>';
+  let rows='';
+  for(let c=1;c<=nCuts();c++){
+    rows+='<tr><td style="text-align:left">Cut '+c+': '+escHtml(cfg.levels[c-1].name)+' → '+escHtml(cfg.levels[c].name)+'</td>'
+      +rounds.map(r=>'<td>'+((myRoundCuts[r]&&myRoundCuts[r][c]!=null)?('#'+myRoundCuts[r][c]):'—')+'</td>').join('')
+      +'<td><b>'+(bookmarks[c]!=null?('#'+bookmarks[c]):'—')+'</b></td></tr>';
+  }
+  return '<div class="card"><h3>Your earlier rounds</h3><p style="font-size:12px;color:#555;margin-top:0">The item position of each cut you set. Your current round starts from your previous round — adjust as you like.</p><table><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+/* facilitator: medians broken out by table (only when there is more than one table) */
+function tableMediansCard(){
+  if(!USE_SB) return '';
+  const tables=Object.keys(sbTableMed||{}).sort();
+  if(tables.length<=1) return '';   // single table → the whole-room median already covers it
+  let head='<th style="text-align:left">Table</th>';
+  for(let c=1;c<=nCuts();c++) head+='<th>Cut '+c+'</th>';
+  let rows='';
+  tables.forEach(t=>{
+    rows+='<tr><td style="text-align:left">Table '+escHtml(t)+'</td>';
+    for(let c=1;c<=nCuts();c++){ const m=sbTableMed[t][c]; rows+='<td>'+((m&&m.median_scale!=null)?Math.round(m.median_scale)+' <span style="color:var(--muted);font-size:11px">(n='+m.n+')</span>':'—')+'</td>'; }
+    rows+='</tr>';
+  });
+  rows+='<tr style="font-weight:bold;background:var(--light-green)"><td style="text-align:left">Whole room</td>';
+  for(let c=1;c<=nCuts();c++){ const m=sbMedians&&sbMedians[c]; rows+='<td>'+((m&&m.median_scale!=null)?Math.round(m.median_scale):'—')+'</td>'; }
+  rows+='</tr>';
+  return '<div class="card"><h3>Medians by table — round '+(viewRound||cfg.currentRound)+'</h3><table><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table><div class="legend">Per-table medians for table discussion; the shaded row is the whole-room median.</div></div>';
+}
+function lockedMsg(k){
+  if(k==='survey')   alert("Finish reviewing every item (both questions) before the survey.");
+  else if(k==='bookmark') alert("Complete the round survey before placing bookmarks.");
+  else if(k==='cuts')     alert("Place all your bookmarks first.");
+}
+function countComplete(){return items().filter(it=>{const a=answers[it.pos];return a&&a.measures&&a.measures.trim()&&a.harder&&a.harder.trim();}).length;}
+function firstIncomplete(){const its=items();for(let i=0;i<its.length;i++){const a=answers[its[i].pos];if(!(a&&a.measures&&a.measures.trim()&&a.harder&&a.harder.trim()))return i;}return its.length-1;}
+function goView(k){
+  // panelists can never reach facilitator views
+  if((k==='setup'||k==='oibmgr'||k==='people'||k==='groups'||k==='overview'||k==='reports') && !isAdmin()) return;   // admin-only
+  if((k==='release'||k==='responses'||k==='progress') && !isFacRole()) return;                         // admin or group facilitator
+  if(mode==='panelist' && isLocked(k)){ lockedMsg(k); return; }
+  view=k;
+  if(USE_SB && k==='overview'){ loadOverviewSB().then(render).catch(e=>{console.error(e);render();}); return; }
+  if(USE_SB && k==='progress'){ loadPanelProgressSB().then(render).catch(e=>{console.error(e);render();}); return; }
+  if(USE_SB && k==='people'){ loadPanelistsSB().then(render).catch(e=>{console.error(e);render();}); return; }
+  if(USE_SB && k==='responses'){ loadResponsesSB().then(render).catch(e=>{console.error(e);render();}); return; }
+  if(USE_SB && k==='reports'){ Promise.all([loadReportSB(),loadReportAllSB()]).then(render).catch(e=>{console.error(e);render();}); return; }
+  if(USE_SB && (k==='cuts'||k==='release')){ loadMediansSB().then(render).catch(e=>{console.error(e);render();}); return; }
+  render();
+}
+function setMode(m){
+  // 'admin' | 'groupfac' | 'panelist' (preview modes for facilitator-type users)
+  if(m==='admin' && !isAdmin()) return;
+  if(m==='groupfac' && !isFacRole()) return;
+  mode=m;
+  document.getElementById('mAdmin').classList.toggle('on',m==='admin');
+  document.getElementById('mGroupFac').classList.toggle('on',m==='groupfac');
+  document.getElementById('mPanelist').classList.toggle('on',m==='panelist');
+  view = m==='admin'?'overview' : m==='groupfac'?'progress' : 'home';
+  if(m==='admin' && USE_SB){ loadOverviewSB().then(render); return; }
+  if(m==='groupfac' && USE_SB){ loadPanelProgressSB().then(render); return; }
+  render();
+}
+
+/* ---------- render dispatch ---------- */
+function render(){
+  paintHeader();renderSide();
+  const c=document.getElementById('content');
+  const f={home,ald,review:reviewOIB,itemmap,bookmark,survey,cuts,setup,groups,people,oibmgr,responses,release,overview,progress,reports,pw};
+  let html=(f[view]||home)();
+  if(isFacRole() && USE_SB){
+    let bar='';
+    if(isAdmin() && sbGroups.length>1){
+      const opts=sbGroups.map(g=>`<option value="${g.id}" ${g.id===currentGroupId?'selected':''}>${escHtml(g.name||((g.content_area||'')+' · '+(g.grade||'')))}</option>`).join('');
+      bar+='<span style="display:inline-flex;align-items:center;gap:8px"><b style="color:var(--med-green)">Room:</b><select onchange="switchGroup(this.value)" style="padding:7px;border:1px solid var(--border);border-radius:7px;font-family:Verdana;font-size:13.5px">'+opts+'</select></span>';
+    }
+    if(sbForms.length>1){
+      const fopts=sbForms.map(f=>`<option value="${f.id}" ${f.id===currentFormId?'selected':''}>${escHtml(f.name||f.grade||'Form')}</option>`).join('');
+      bar+='<span style="display:inline-flex;align-items:center;gap:8px"><b style="color:var(--med-green)">Form:</b><select onchange="switchForm(this.value)" style="padding:7px;border:1px solid var(--border);border-radius:7px;font-family:Verdana;font-size:13.5px">'+fopts+'</select></span>';
+    }
+    if(bar) html='<div class="card" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:14px;background:var(--light-green);position:sticky;top:0;z-index:5">'+bar+'</div>'+html;
+  }
+  if(userRole==='panelist' && !STORAGE_OK){
+    html='<div class="hintbar" style="margin-bottom:14px">⚠ This viewer isn&#699;t saving your progress between reloads. Open <b>index.html</b> directly in your browser (double-click it in the folder) so your notes and bookmarks persist.</div>'+html;
+  }
+  c.innerHTML=html;
+}
+
+/* ---------- panelist screens ---------- */
+function home(){
+  const steps=[`<div class="step done"><div class="bub">✓</div>Training</div>`];
+  for(let r=1;r<=cfg.rounds;r++){
+    const cls=r<cfg.currentRound?'done':(r===cfg.currentRound?'cur':'');
+    const inner=r<cfg.currentRound?'✓':r;
+    steps.push(`<div class="step ${cls}"><div class="bub">${inner}</div>Round ${r}</div>`);
+  }
+  steps.push(`<div class="step"><div class="bub">⚑</div>Final Eval</div>`);
+  return `<h2 class="h">${cfg.greeting||'Hello'}, ${cfg.panelistName.split(" ")[0]}</h2>
+  <p class="lede">Here&#699;s your assignment and where you are in the workshop. Pick up wherever the green button points.</p>
+  <div class="grid2">
+    <div class="card"><h3>Your assignment</h3>
+      <div class="kv"><span>Content area</span><b>${cfg.contentArea}</b></div>
+      <div class="kv"><span>${escHtml(cfg.gradeLabel||'Grade')}</span><b>${cfg.grade}</b></div>
+      <div class="kv"><span>Table</span><b>Table ${cfg.tableNo}</b></div>
+      <div class="kv"><span>Table leader</span><b>${cfg.tableLeader}</b></div>
+    </div>
+    <div class="card"><h3>Today&#699;s focus</h3>
+      ${(USE_SB && sbForms.length) ? `
+      <div class="callout">${sbForms.length>1?('You have <b>'+sbForms.length+' booklets</b> to work through.'):'Work through your booklet:'} Open one to study its items, take the survey, and place bookmarks.</div>
+      ${sbForms.map(f=>{
+        const label=escHtml(f.name||f.grade||'Booklet');
+        if(f.status==='closed') return `<button class="cta ghost" disabled style="opacity:.5">${label} — Closed</button>`;
+        const active=f.id===currentFormId;
+        const started=active && (countComplete()>0 || Object.values(bookmarks).some(v=>v!=null) || surveyState.q1!=null);
+        return `<button class="cta ${started?'':'ghost'}" onclick="openForm('${f.id}')">${label}</button>`;
+      }).join(' ')}`
+      : `<div class="callout"><b>Round ${cfg.currentRound} of ${cfg.rounds}</b> &mdash; complete these in order: <b>1)</b> study every item, <b>2)</b> finish the round survey, <b>3)</b> place a bookmark for each of the ${nCuts()} cut${nCuts()>1?'s':''}. Each step unlocks the next.</div>
+      <button class="cta" onclick="goView('review')">Start &rarr; Review Items</button>`}
+    </div>
+  </div>
+  <div class="card"><h3>Workshop progress</h3><div class="stepper">${steps.join('')}</div></div>`;
+}
+
+function ald(){
+  return `<h2 class="h">Achievement Levels</h2>
+  <p class="lede">These ${cfg.levels.length} levels define what students at each level know and can do. They&#699;re always one click away while you place bookmarks.</p>
+  ${cfg.levels.map(l=>`<div class="lvl" style="background:${l.color}">
+     <h4>${l.name}<span class="pill">${l.short}</span></h4><p>${l.descriptor}</p></div>`).join('')}`;
+}
+
+/* level index = number of PLACED cuts below this position */
+function levelOf(pos){
+  let n=0;
+  for(let c=1;c<=nCuts();c++){ if(bookmarks[c]!=null && pos>bookmarks[c]) n++; }
+  return n;
+}
+function bookmark(){
+  let rows="";
+  items().forEach((it,i)=>{
+    const lvl=cfg.levels[levelOf(it.pos)];
+    rows+=`<div class="row" style="border-left:6px solid ${lvl.color}" onclick="setBm(${it.pos})">
+      <span class="pos">${it.pos}</span><span>Item ${String(it.pos).padStart(2,'0')} &mdash; ${it.brief||''}</span>
+      <span>${it.scale||cfg.booklet.rpLabel}</span><span>p.${it.page}</span>
+      <span class="place">Set Cut ${activeCut} here</span></div>`;
+    for(let c=1;c<=nCuts();c++){ if(bookmarks[c]===it.pos){
+      rows+=`<div class="bandmark"><span>Cut ${c}: ${cfg.levels[c-1].name} → ${cfg.levels[c].name}</span></div>`;
+    }}
+  });
+  const cutBtns=[];
+  for(let c=1;c<=nCuts();c++){
+    const placed=bookmarks[c]!=null;
+    cutBtns.push(`<div class="cutbtn ${activeCut===c?'active':''}" onclick="pickCut(${c})">
+      <span class="sw" style="background:${cfg.levels[c].color}"></span>Cut ${c}
+      <span style="color:var(--muted)">${cfg.levels[c-1].name}→${cfg.levels[c].name}</span>
+      <span style="margin-left:2px;font-weight:bold;color:${placed?'var(--dark-green)':'#c0392b'}">${placed?'✓ #'+bookmarks[c]:'• not set'}</span></div>`);
+  }
+  const cur=bookmarks[activeCut];
+  const allPlaced=bookmarksComplete();
+  const LK=panelEditLocked();
+  return `<h2 class="h">Place Bookmarks</h2>
+  ${LK?`<div class="hintbar" style="margin-bottom:12px">🔒 ${editLockMsg(LK)}</div>`:''}
+  <p class="lede">Pick a cut score, then click the item where that level begins. Cuts are empty until you place them; the booklet recolors as you go. Place all ${nCuts()} to finish.</p>
+  ${carriedForward?`<div class="callout" style="background:var(--warn-bg,#fff8e1);border-color:var(--warn-bd,#e8d48a)">⤺ These cuts are carried over from <b>Round ${cfg.currentRound-1}</b> as a starting point. They are <b>not saved yet</b> — review and adjust each one, then <b>Confirm</b> below to record them for Round ${cfg.currentRound}.</div>`:''}
+  <div class="cuts">${cutBtns.join('')}</div>
+  <div class="oib"><div class="hd"><span>#</span><span>Item</span><span>RP</span><span>Page</span><span></span></div>${rows}</div>
+  <div class="legend">Setting <b>Cut ${activeCut}</b> (${cfg.levels[activeCut-1].name} → ${cfg.levels[activeCut].name}) — ${cur!=null?('placed at item '+cur):'<b style="color:#c0392b">not yet placed</b>. Click the item where '+cfg.levels[activeCut].name+' begins.'}</div>
+  <button class="cta" onclick="finishBookmarks()" ${allPlaced?'':'disabled'}>${carriedForward?'Confirm my bookmarks &amp; continue':'Save bookmarks &amp; continue'} &rarr;</button>
+  ${allPlaced?'':'<div class="legend">Place all '+nCuts()+' cut'+(nCuts()>1?'s':'')+' to continue.</div>'}
+  ${prevRoundsCard()}`;
+}
+function pickCut(c){activeCut=c;render();}
+function setBm(pos){
+  const L=panelEditLocked(); if(L){ alert(editLockMsg(L)); return; }
+  let lo=0, hi=itemCount()+1;          // bound by nearest PLACED neighbours
+  for(let c=activeCut-1;c>=1;c--){ if(bookmarks[c]!=null){lo=bookmarks[c];break;} }
+  for(let c=activeCut+1;c<=nCuts();c++){ if(bookmarks[c]!=null){hi=bookmarks[c];break;} }
+  if(pos<=lo||pos>=hi) return;          // keep cuts strictly ordered
+  bookmarks[activeCut]=pos;saveProgress();
+  if(USE_SB && !carriedForward) saveBmSB(activeCut);   // while carried-forward, hold saves until Confirm
+  render();
+}
+
+function survey(){
+  const opts=["Very ready","Mostly ready","Somewhat unsure","Not ready"];
+  const ready=surveyState.q1!=null;
+  const LK=panelEditLocked();
+  return `<h2 class="h">Round ${cfg.currentRound} Survey</h2>
+  ${LK?`<div class="hintbar" style="margin-bottom:12px">🔒 ${editLockMsg(LK)} Your responses are read-only.</div>`:''}
+  <p class="lede">Complete this after studying the items and before you place your bookmarks.</p>
+  <div class="card">
+    <div class="q"><label class="ql">Having studied all the items, how ready do you feel to set your bookmarks?</label>
+      ${opts.map((o,i)=>`<label class="opt ${surveyState.q1===i?'sel':''}" ${LK?'style="opacity:.55;pointer-events:none"':`onclick="pick(${i})"`}><input type="radio" ${surveyState.q1===i?'checked':''} ${LK?'disabled':''}>${o}</label>`).join('')}</div>
+    <button class="cta" onclick="submitSurvey()" ${ready?'':'disabled'}>Submit survey &rarr;</button>
+    <button class="cta ghost" onclick="goView('review')">Back to items</button>
+    ${ready?'':'<div class="legend">Answer the question above to continue.</div>'}
+  </div>`;
+}
+function pick(i){const L=panelEditLocked(); if(L){ alert(editLockMsg(L)); return; } surveyState.q1=i;saveProgress();if(USE_SB)saveSurveySB();render();}
+function submitSurvey(){ if(surveyState.q1==null){alert("Please answer the readiness question.");return;} goView('bookmark'); }
+async function finishBookmarks(){
+  if(!bookmarksComplete()){alert("Place all your bookmarks first.");return;}
+  if(USE_SB && carriedForward){           // confirm carried-over cuts: save them all now
+    for(let c=1;c<=nCuts();c++){ if(bookmarks[c]!=null) await saveBmSB(c); }
+    carriedForward=false;
+    myRoundCuts[cfg.currentRound]=Object.assign({},bookmarks);
+  }
+  goView('cuts');
+}
+
+/* My Cut Scores — release-gated median & graphics */
+function toScore(pos){return Math.round(380 + (pos-1)*9 + 60);}
+function myCutScale(c){
+  if(bookmarks[c]==null) return null;
+  const it=itemAt(bookmarks[c]);
+  return (it && it.scale!=null) ? Number(it.scale) : toScore(bookmarks[c]);
+}
+function cuts(){
+  const released=cfg.resultsReleased;
+  let rows="";
+  for(let c=1;c<=nCuts();c++){
+    const placed=bookmarks[c]!=null;
+    const you= placed ? Math.round(myCutScale(c)) : '<span style="color:#c0392b">not placed</span>';
+    let medianCell='<span style="color:#bbb">—</span>';
+    if(released){
+      if(USE_SB){ const m=sbMedians&&sbMedians[c]; medianCell = (m&&m.median_scale!=null) ? Math.round(m.median_scale)+' <span style="color:var(--muted);font-size:11px">(n='+m.n+')</span>' : '<span style="color:#bbb">—</span>'; }
+      else { medianCell = Math.round(toScore(Math.round(itemCount()*c/(nCuts()+1)))); }
+    }
+    rows+=`<tr>
+      <td>${cfg.levels[c-1].name} &rarr; ${cfg.levels[c].name}<br><span class="tag" style="background:${cfg.levels[c].color}">Cut ${c}</span></td>
+      <td class="you">${you}</td>
+      <td>${medianCell}</td></tr>`;
+  }
+  let graphics;
+  if(released){ graphics = USE_SB ? resultsGraphics() : (cfg.showImpact!==false?impactChart():''); }
+  else {
+    graphics=`<div class="card"><h3>Group results</h3>
+      <div class="locked"><div class="lk">🔒</div><b>Results not yet released</b><br>
+        Your facilitator will release the group median when the round is complete.</div></div>`;
+  }
+  return `<h2 class="h">My Cut Scores <span style="font-size:12px;color:var(--muted)">(Round ${cfg.currentRound})</span></h2>
+  <p class="lede">Your own recommended cut scores for this round. The group median appears only after your facilitator releases the round.</p>
+  <div class="card"><table>
+    <thead><tr><th>Cut</th><th>You (round ${cfg.currentRound})</th><th>Group median</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    ${released?'':'<div class="callout">Only your own recommendations are visible right now. The group median is hidden until release.</div>'}
+  </div>
+  ${prevRoundsCard()}
+  ${graphics}`;
+}
+function distChart(dist){
+  const N=itemCount();
+  let html='';
+  let any=false;
+  for(let c=1;c<=nCuts();c++){
+    const d=(dist&&dist[c])||{};
+    const freqs=Object.values(d); const total=freqs.reduce((a,b)=>a+b,0);
+    if(total>0)any=true;
+    const maxFreq=Math.max(1,...freqs);
+    const col=cfg.levels[c].color;
+    const barW = N>60?9:(N>35?12:(N>18?18:26));   // fixed width; chart scrolls if needed
+    const every = N>60?10:(N>30?5:1);             // sparse x-axis labels for big booklets
+    let bars='';
+    for(let p=1;p<=N;p++){
+      const f=d[p]||0;
+      const h=f?Math.round(f/maxFreq*72)+6:2;
+      const lab=(p===1||p===N||(p%every===0&&(N-p)>=every))?p:'';
+      bars+=`<div style="flex:0 0 ${barW}px;width:${barW}px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end" title="Item ${p}: ${f} panelist${f===1?'':'s'}">
+        <div style="font-size:9px;color:var(--med-green);height:12px;font-weight:bold">${f||''}</div>
+        <div style="width:80%;height:${h}px;background:${f?col:'#e3e9e3'};border-radius:2px 2px 0 0"></div>
+        <div style="font-size:8px;color:var(--muted);margin-top:2px;height:10px">${lab}</div></div>`;
+    }
+    html+=`<div class="card"><h3 style="margin-bottom:3px">Cut ${c}: ${cfg.levels[c-1].name} → ${cfg.levels[c].name} <span style="font-size:11px;color:var(--muted)">(n=${total})</span></h3>
+      <p style="font-size:12px;color:#555;margin:0 0 8px">Number of panelists who placed this cut at each item position.</p>
+      <div style="overflow-x:auto;padding-bottom:4px"><div style="display:flex;align-items:flex-end;gap:2px;height:104px;border-bottom:2px solid var(--border);min-width:min-content;width:max-content">${bars}</div></div>
+      <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">item position →</div></div>`;
+  }
+  if(!any) return `<div class="card"><h3>Distribution of bookmarks</h3><p style="color:var(--muted)">No panelist bookmarks recorded for this round yet.</p></div>`;
+  return `<div class="card" style="background:none;border:none;padding:0;margin:0"><h3 style="font-family:'Arial Black';color:var(--dark-green)">Distribution of bookmarks — round ${vRound()}</h3></div>`+html;
+}
+function spreadGraphic(){
+  const ms=[]; for(let c=1;c<=nCuts();c++){ const m=sbMedians&&sbMedians[c]; if(m&&m.median_scale!=null) ms.push({c,m}); }
+  if(!ms.length) return `<div class="card"><h3>Group results</h3><p style="color:var(--muted)">No panelist bookmarks recorded for this round yet.</p></div>`;
+  let lo=Math.min(...ms.map(x=>Number(x.m.min_scale))), hi=Math.max(...ms.map(x=>Number(x.m.max_scale)));
+  if(lo===hi){lo-=10;hi+=10;}
+  const pos=v=>((Number(v)-lo)/(hi-lo))*100;
+  const bars=ms.map(({c,m})=>{
+    const L=pos(m.min_scale),R=pos(m.max_scale),M=pos(m.median_scale),col=cfg.levels[c].color;
+    return `<div style="margin:10px 0">
+      <div style="font-size:12px;color:var(--med-green);font-weight:bold;margin-bottom:3px">Cut ${c}: ${cfg.levels[c-1].name} → ${cfg.levels[c].name}
+        &nbsp;<span style="color:var(--muted);font-weight:normal">median ${Math.round(m.median_scale)}, range ${Math.round(m.min_scale)}–${Math.round(m.max_scale)}, n=${m.n}</span></div>
+      <div style="position:relative;height:18px;background:var(--light-green);border:1px solid var(--border);border-radius:9px">
+        <div style="position:absolute;left:${L}%;width:${Math.max(2,R-L)}%;top:3px;height:10px;background:${col};opacity:.4;border-radius:6px"></div>
+        <div style="position:absolute;left:${M}%;top:0;height:18px;width:3px;background:${col}"></div>
+      </div></div>`;
+  }).join('');
+  return `<div class="card"><h3>Where the panel landed <span class="new">round ${vRound()}</span></h3>
+    <p style="font-size:13px;color:#555;margin-top:0">Each bar is the spread of panelist cut scores this round; the line marks the group median. Real workshop data.</p>
+    ${bars}</div>`;
+}
+function impactChart(){
+  const real=realImpact();
+  const pct = real || demoImpact();
+  const tag = real? '<span class="new">live</span>' : '<span class="new">illustrative</span>';
+  const note = real
+    ? 'Percent of students in each level, from the loaded score distribution and this round&#699;s median cut scores.'
+    : 'Illustrative percent in each level (load an impact distribution on OIB / Items for real numbers).';
+  const bars=cfg.levels.map((l,i)=>`<div class="col"><div class="b" style="height:${pct[i]*1.4}px;background:${l.color}">${pct[i]}%</div><div class="cap">${l.name}</div></div>`).join('');
+  const trows=cfg.levels.map((l,i)=>`<tr><td style="text-align:left"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${l.color};vertical-align:middle;margin-right:7px"></span>${escHtml(l.name)}</td><td>${pct[i]}%</td></tr>`).join('');
+  return `<div class="card"><h3>Impact data ${tag}</h3>
+    <p style="font-size:13px;color:#555;margin-top:0">${note}</p>
+    <table style="max-width:340px;margin-bottom:14px"><thead><tr><th style="text-align:left">Level</th><th>Percent</th></tr></thead><tbody>${trows}</tbody></table>
+    <div class="bar-chart">${bars}</div></div>`;
+}
+/* Round-specific results: R1 = spread; R2 = impact + spread; R3 = impact only */
+function resultsGraphics(){
+  const r=vRound(); let g='';
+  if(r>=2 && cfg.showImpact!==false) g+=impactChart();
+  if(r<=2) g+=distChart(sbDist)+spreadGraphic();
+  return g;
+}
+function demoImpact(){
+  // produce N percentages summing ~100 based on number of levels
+  const n=cfg.levels.length;const base=Math.floor(100/n);const arr=Array(n).fill(base);
+  arr[0]+=8;arr[n-1]-=4;arr[Math.floor(n/2)]+= (100-arr.reduce((a,b)=>a+b,0));return arr;
+}
+
+/* ---------- Review OIB (panelist) ---------- */
+function itemContentHTML(it){
+  const d=it.display||{mode:"hidden"};
+  if(d.mode==="json"){
+    let h=`<p class="itemstem">${d.stem||""}</p>`;
+    if(d.options&&d.options.length){
+      h+=`<ul class="opts2">`+d.options.map((o,i)=>`<li><span class="ol">${String.fromCharCode(65+i)}</span>${o}</li>`).join('')+`</ul>`;
+    }
+    return h;
+  }
+  if(d.mode==="image"){
+    return `<div class="imgbox"><img src="${d.src}" alt="${d.alt||('Item '+it.pos)}"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="imgmiss" style="display:none">Screenshot not found (<code>${d.src}</code>).<br>Drop the image in the <code>images</code> folder, or present it from your secure materials.</div></div>`;
+  }
+  const ref=(it.page&&it.page!==it.pos)?('item '+it.pos+' (page '+it.page+')'):('item '+it.pos);
+  return `<div class="hiddenbox"><div class="lk">🔒</div><b>Item content not loaded.</b><br>
+     ${d.note||('Refer to the secure OIB materials for '+ref+'.')}</div>`;
+}
+function reviewOIB(){
+  const its=items();const N=its.length;
+  if(reviewIdx>=N)reviewIdx=N-1; if(reviewIdx<0)reviewIdx=0;
+  const it=its[reviewIdx];
+  visited[it.pos]=true;
+  const a=answers[it.pos]||{measures:"",harder:""};
+  const isFirst=reviewIdx===0;
+  const done=countComplete();
+  const LK=panelEditLocked();
+  return `<h2 class="h">Review Items <span style="font-size:12px;color:var(--muted)">(Ordered Item Booklet)</span></h2>
+  ${LK?`<div class="hintbar" style="margin-bottom:12px">🔒 ${editLockMsg(LK)} You can read your notes, but they can no longer be changed.</div>`:''}
+  <p class="lede">Study every item in order and answer both questions. You must finish all ${N} before the survey unlocks. Answers save automatically.</p>
+  <div class="reviewbar">
+    <div class="prog">Item ${it.pos} of ${N} &middot; <b>${done} of ${N} complete</b>${done===N?' ✓':''}</div>
+  </div>
+  <div class="card">
+    <div class="meta">
+      <span class="chip"><b>#${it.pos}</b></span>
+      <span class="chip">Page <b>${it.page}</b></span>
+      <span class="chip">${cfg.booklet.rpLabel} <b>${it.scale||'—'}</b></span>
+      <span class="chip">${it.strand||'—'}</span>
+      <span class="chip">Score point <b>${it.scorePoint||'1/1'}</b></span>
+      ${it.itemType?`<span class="chip">${it.itemType}</span>`:''}
+    </div>
+    ${itemContentHTML(it)}
+    <div class="qbox"><p class="qh">1. What does this item / score point measure?</p>
+      <textarea oninput="setAns(${it.pos},'measures',this.value)" ${LK?'readonly':''} placeholder="Describe the knowledge or skill...">${a.measures||''}</textarea></div>
+    <div class="qbox"><p class="qh">2. Why is it more difficult than the item(s) that precede it?</p>
+      <textarea oninput="setAns(${it.pos},'harder',this.value)" ${LK?'readonly':''} placeholder="${isFirst?'This is the first item — note what makes it accessible.':'Explain what adds difficulty...'}">${a.harder||''}</textarea></div>
+  </div>
+  <div class="reviewbar" style="margin-top:14px;justify-content:space-between">
+    <button class="cta ghost" onclick="reviewGo(-1)" ${reviewIdx===0?'disabled':''}>&larr; Prev</button>
+    <button class="cta" onclick="reviewGo(1)">${reviewIdx===N-1?'Finish &rarr;':'Next →'}</button>
+  </div>`;
+}
+function reviewGo(d){
+  const N=itemCount();reviewIdx+=d;
+  if(reviewIdx>=N){
+    reviewIdx=N-1;
+    if(reviewComplete()){ goView('survey'); }
+    else{ const m=firstIncomplete(); reviewIdx=m; render();
+      alert("Please answer both questions for every item before continuing. Jumping to the first item that still needs an answer (#"+items()[m].pos+")."); }
+    return;
+  }
+  if(reviewIdx<0)reviewIdx=0;saveProgress();render();
+}
+function setAns(pos,field,val){
+  if(panelEditLocked()) return;   // locked once results released / booklet closed
+  if(!answers[pos])answers[pos]={measures:"",harder:""};
+  answers[pos][field]=val;saveAnswers();
+  if(USE_SB){ clearTimeout(ansTimer[pos]); ansTimer[pos]=setTimeout(()=>saveAnsSB(pos),600); }
+  const prog=document.querySelector('.reviewbar .prog');
+  if(prog){const N=itemCount();const done=countComplete();prog.innerHTML='Item '+pos+' of '+N+' · <b>'+done+' of '+N+' complete</b>'+(done===N?' ✓':'');}
+}
+function countAnswered(){return Object.values(answers).filter(a=>a.measures&&a.measures.trim()).length;}
+
+/* ---------- Item Map (panelist) ---------- */
+const IMCOL_DEFAULT={page:false,scale:true,strand:true,scorePoint:true,itemType:true,pval:false,notes:true};
+function imNoteCell(it){
+  const a=answers[it.pos];const parts=[];
+  if(a&&a.measures&&a.measures.trim()) parts.push('<b>Measures:</b> '+escHtml(a.measures));
+  if(a&&a.harder&&a.harder.trim()) parts.push('<b>Why harder:</b> '+escHtml(a.harder));
+  return parts.length?parts.join('<br>'):'<span class="pending">to do</span>';
+}
+function itemmap(){
+  const vis=Object.assign({},IMCOL_DEFAULT,cfg.itemMapColumns||{});
+  const cols=[{label:'#',cell:it=>it.pos}];
+  if(vis.page)       cols.push({label:'Page',cell:it=>it.page});
+  if(vis.scale)      cols.push({label:cfg.booklet.rpLabel||'Scale',cell:it=>it.scale!=null?it.scale:'—'});
+  if(vis.strand)     cols.push({label:'Standard',left:true,cell:it=>escHtml(it.strand||'—')});
+  if(vis.scorePoint) cols.push({label:'Score pt',cell:it=>escHtml(it.scorePoint||'1/1')});
+  if(vis.itemType)   cols.push({label:'Type',cell:it=>escHtml(it.itemType||'')});
+  if(vis.pval)       cols.push({label:'Difficulty',cell:it=>(it.pval!=null&&it.pval!=='')?it.pval:'—'});
+  if(vis.notes)      cols.push({label:'What you wrote',left:true,cell:imNoteCell});
+  const th=cols.map(c=>`<th${c.left?' style="text-align:left"':''}>${c.label}</th>`).join('');
+  let rows="";
+  items().forEach(it=>{
+    const tds=cols.map(c=>`<td${c.left?' style="text-align:left"':''}>${c.cell(it)}</td>`).join('');
+    rows+=`<tr class="imrow" onclick="openItem(${it.pos})">${tds}</tr>`;
+    for(let c=1;c<=nCuts();c++){ if(bookmarks[c]===it.pos){
+      rows+=`<tr><td colspan="${cols.length}" style="padding:2px 0"><div class="bandmark" style="margin:0"><span>Cut ${c}: ${cfg.levels[c-1].name} → ${cfg.levels[c].name}</span></div></td></tr>`;
+    }}
+  });
+  const anyCut=Object.values(bookmarks).some(v=>v!=null);
+  return `<h2 class="h">Item Map</h2>
+  <p class="lede">Every item in OIB order. ${anyCut?'Your placed cut scores appear as green bands.':'Your cut scores will appear here once you place them in <b>Place Bookmarks</b>.'} Click a row to open that item.</p>
+  <div class="card"><table><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function openItem(pos){const idx=items().findIndex(i=>i.pos===pos);if(idx>=0){reviewIdx=idx;goView('review');}}
+
+/* ---------- facilitator screens ---------- */
+function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function allResponses(){
+  const map={};
+  const add=(who,pos,r)=>{if(!r||(!r.measures&&!r.harder))return;(map[pos]=map[pos]||[]).push(Object.assign({who},r));};
+  Object.keys(answers).forEach(p=>add('You',+p,answers[p]));
+  const demo=window.OIB_DEMO_RESPONSES||{};
+  Object.keys(demo).forEach(who=>Object.keys(demo[who]).forEach(p=>add(who,+p,demo[who][p])));
+  return map;
+}
+function responses(){
+  const map = USE_SB ? (sbRollup||{}) : allResponses();
+  const totalPanelists = USE_SB ? (sbPanelistCount!=null?sbPanelistCount:'—') : (1+Object.keys(window.OIB_DEMO_RESPONSES||{}).length);
+  const blocks=items().map(it=>{
+    const rs=map[it.pos]||[];
+    const body=rs.length?rs.map(r=>`<div class="resp"><div class="who">${r.who}</div>
+        <div class="ql2">What it measures</div>${escHtml(r.measures)||'<i style="color:#bbb">—</i>'}
+        <div class="ql2">Why it&#699;s harder</div>${escHtml(r.harder)||'<i style="color:#bbb">—</i>'}</div>`).join('')
+      :'<div class="resp" style="color:#aaa">No responses yet.</div>';
+    return `<div class="acc" id="acc${it.pos}">
+      <div class="ah" onclick="document.getElementById('acc${it.pos}').classList.toggle('open')">
+        <b>#${it.pos}</b>&nbsp; ${it.brief||''} <span class="cnt">${rs.length}/${totalPanelists} panelists</span></div>
+      <div class="ab">${body}</div></div>`;
+  }).join('');
+  return `<h2 class="h">Item Responses</h2>
+  <p class="lede">Panelists&#699; answers to the two OIB questions, rolled up by item. Click an item to expand. This replaces the Google Form export.</p>
+  ${blocks}`;
+}
+
+/* ---------- Dashboards ---------- */
+let sbPanelProgress=[], sbOverview=[], sbSurvey=[];
+async function loadPanelProgressSB(){
+  sbPanelProgress=[]; sbSurvey=[];
+  if(!currentFormId)return;
+  const {data,error}=await SB.rpc('panelist_progress',{frm:currentFormId});
+  if(error){console.error('panel progress',error);} else sbPanelProgress=data||[];
+  const {data:sv,error:se}=await SB.from('survey_responses')
+    .select('answer,panelists(first_name,last_name)')
+    .eq('form_id',currentFormId).eq('round',cfg.currentRound).eq('question_key','readiness');
+  if(se){console.error('survey',se);} else sbSurvey=sv||[];
+}
+async function loadOverviewSB(){
+  sbOverview=[];
+  const {data,error}=await SB.rpc('form_progress',{wf:wid()});
+  if(error){console.error('overview',error);return;}
+  sbOverview=data||[];
+}
+async function drillToForm(fid,gid){
+  currentGroupId=gid;
+  await loadFormsSB(gid);
+  await loadFormContext(fid);
+  await loadPanelProgressSB();
+  view='progress'; render(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function progress(){
+  if(!USE_SB) return `<h2 class="h">Panel progress</h2><p class="lede">Requires the database connection.</p>`;
+  const rows=sbPanelProgress; const done=rows.filter(r=>r.study_done).length; const n=rows.length;
+  const allDone = n>0 && done===n;
+  const flag = allDone
+    ? `<div class="card" style="background:var(--dark-green);color:#fff"><b>✓ All ${n} panelists have finished studying the OIB.</b><br><span style="font-size:13px">Ready to train on bookmark placement.</span></div>`
+    : `<div class="callout"><b>${done} of ${n}</b> panelists have finished studying this booklet.</div>`;
+  const trs=rows.map(r=>`<tr>
+     <td style="text-align:left">${escHtml(r.name||'—')}</td>
+     <td>${r.items_complete}/${r.total_items}</td>
+     <td>${r.study_done?'<span class="answered">finished</span>':'<span class="pending">studying</span>'}</td>
+     <td>${r.cuts_placed}/${r.cuts_total}</td></tr>`).join('');
+  // readiness survey summary for this round
+  const RLBL=['Very ready','Mostly ready','Somewhat unsure','Not ready'];
+  const scnt=[0,0,0,0]; sbSurvey.forEach(s=>{const i=parseInt(s.answer);if(i>=0&&i<4)scnt[i]++;});
+  const nameOf=s=>escHtml(((((s.panelists||{}).first_name||'')+' '+((s.panelists||{}).last_name||'')).trim())||'Panelist');
+  const lowNames=sbSurvey.filter(s=>['2','3'].includes(String(s.answer))).map(s=>nameOf(s)+' ('+(RLBL[parseInt(s.answer)])+')');
+  const concernCard=lowNames.length?`<div class="card" style="background:var(--warn-bg);border-color:var(--warn-bd)"><h3 style="color:#8a6d1a">⚠ Needs follow-up — low readiness</h3><div style="font-size:14px">${lowNames.join(' · ')}</div></div>`:'';
+  const surveyCard=`<div class="card"><h3>Readiness survey — Round ${cfg.currentRound}</h3>
+    ${sbSurvey.length
+      ? '<table style="max-width:360px"><thead><tr><th style="text-align:left">Response</th><th>Count</th></tr></thead><tbody>'
+        + RLBL.map((l,i)=>`<tr><td style="text-align:left">${l}</td><td>${scnt[i]}</td></tr>`).join('')
+        + '</tbody></table>'
+        + '<div class="legend" style="margin-top:8px">'+sbSurvey.map(s=>escHtml((((s.panelists||{}).first_name||'')+' '+((s.panelists||{}).last_name||'')).trim()||'Panelist')+': '+(RLBL[parseInt(s.answer)]||'—')).join(' · ')+'</div>'
+      : '<p style="color:var(--muted)">No readiness-survey responses yet for this round.</p>'}</div>`;
+  return `<h2 class="h">Panel progress <span style="font-size:12px;color:var(--muted)">${escHtml(cfg.formName||cfg.groupName||'')} · Round ${cfg.currentRound}</span></h2>
+  <p class="lede">How far each panelist is in studying the booklet and placing bookmarks this round.</p>
+  ${flag}
+  ${concernCard}
+  <div class="card"><table>
+    <thead><tr><th style="text-align:left">Panelist</th><th>Items studied</th><th>Studying</th><th>Bookmarks (R${cfg.currentRound})</th></tr></thead>
+    <tbody>${trs||'<tr><td colspan="4" style="color:#bbb">No panelists in this room.</td></tr>'}</tbody></table></div>
+  ${surveyCard}`;
+}
+function overview(){
+  if(!USE_SB) return `<h2 class="h">Dashboard</h2><p class="lede">Requires the database connection.</p>`;
+  const stageOf=r=>{
+    if(r.total_items===0) return '<span class="pending">no items</span>';
+    if(r.n_finished_study < r.n_panelists) return 'Studying OIB';
+    if(r.results_released) return 'R'+r.current_round+' released';
+    return 'R'+r.current_round+' bookmarking';
+  };
+  const trs=sbOverview.map(r=>{
+    const ready = r.total_items>0 && r.n_panelists>0 && r.n_finished_study===r.n_panelists;
+    return `<tr class="imrow" onclick="drillToForm('${r.form_id}','${r.group_id}')">
+      <td style="text-align:left">${escHtml((r.content_area||'')+' · '+(r.grade||''))}</td>
+      <td style="text-align:left">${escHtml(r.form_grade||r.name||'—')}</td>
+      <td>${r.n_panelists}</td>
+      <td>${r.n_finished_study}/${r.n_panelists} ${ready?'<span class="answered">ready</span>':''}</td>
+      <td>R${r.current_round}</td>
+      <td>${r.n_bookmarked}/${r.n_panelists}</td>
+      <td>${r.results_released?'<span class="answered">released</span>':'held'}</td>
+      <td>${stageOf(r)}</td>
+      <td style="text-align:left">${r.concerns?'<span style="color:#c0392b">'+escHtml(r.concerns)+'</span>':''}</td>
+      ${isAdmin()?`<td><button class="cta ghost small" style="border-color:#c0392b;color:#c0392b" onclick="event.stopPropagation();deleteFormSB('${r.form_id}')">Delete</button></td>`:''}</tr>`;}).join('');
+  const ncol = isAdmin()?10:9;
+  const readyCount=sbOverview.filter(r=>r.total_items>0&&r.n_panelists>0&&r.n_finished_study===r.n_panelists).length;
+  return `<h2 class="h">Workshop dashboard</h2>
+  <p class="lede">Where every form is in the process. Forms marked <span class="answered">ready</span> have all panelists finished studying — good candidates to start bookmark training together.</p>
+  ${readyCount?`<div class="callout"><b>${readyCount}</b> form(s) have all panelists finished studying.</div>`:''}
+  <div style="margin-bottom:12px"><button class="cta ghost" onclick="advanceAllRoundsSB()">Advance all forms to next round</button> <span class="legend">Click a row to open that form's panel progress; advance individual rounds on each form's Results &amp; Release.</span></div>
+  <div class="card"><table>
+    <thead><tr><th style="text-align:left">Room</th><th style="text-align:left">Form</th><th>Panelists</th><th>Finished studying</th><th>Round</th><th>Bookmarked</th><th>Results</th><th>Stage</th><th style="text-align:left">Low readiness</th>${isAdmin()?'<th></th>':''}</tr></thead>
+    <tbody>${trs||'<tr><td colspan="'+ncol+'" style="color:#bbb">No forms yet.</td></tr>'}</tbody></table></div>`;
+}
+
+/* ---------- Reports & Export (technical-report tables) ---------- */
+let reportRaw=null;   // {bm:[...], impact:[...]} for the active form
+async function loadReportSB(){
+  reportRaw=null;
+  if(!currentFormId) return;
+  const {data:bm}=await SB.from('bookmarks')
+    .select('round,cut_number,item_pos,scale_score,panelist_id,panelists(first_name,last_name,table_no)')
+    .eq('form_id',currentFormId);
+  const {data:imp}=await SB.from('impact_scores').select('scale_score,n_students').eq('form_id',currentFormId);
+  reportRaw={bm:bm||[], impact:imp||[]};
+}
+function _med(a){if(!a.length)return null;const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function _mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:null;}
+function _sd(a){if(a.length<2)return null;const m=_mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1));}
+function r1(x){return x==null||isNaN(x)?'':Math.round(x*10)/10;}
+function roundCutScale(rnd){const out=[];for(let c=1;c<=nCuts();c++){const v=reportRaw.bm.filter(b=>b.round===rnd&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score);out.push(_med(v));}return out;}
+function impactFor(cutScales){
+  const dist=reportRaw.impact; if(!dist||!dist.length) return null;
+  const total=dist.reduce((s,x)=>s+(+x.n_students||0),0); if(!total) return null;
+  if(!cutScales||cutScales.some(c=>c==null)) return null;
+  const pct=[];
+  for(let i=0;i<cfg.levels.length;i++){
+    const lo=i===0?-Infinity:cutScales[i-1];
+    const hi=i===cfg.levels.length-1?Infinity:cutScales[i];
+    const n=dist.filter(x=>(+x.scale_score)>=lo && (+x.scale_score)<hi).reduce((s,x)=>s+(+x.n_students||0),0);
+    pct.push(100*n/total);
+  }
+  return pct;
+}
+function reportTables(){
+  if(!reportRaw) return [];
+  const R=Math.max(cfg.rounds||1, ...reportRaw.bm.map(b=>b.round||1), 1);
+  const nc=nCuts();
+  const cutLabel=c=>'Cut '+c+': '+cfg.levels[c-1].name+' → '+cfg.levels[c].name;
+  const tables=[];
+  // 1) Cut scores by round (median scale)
+  (()=>{ const head=['Cut']; for(let r=1;r<=R;r++)head.push('Round '+r); head.push('Final');
+    const aoa=[head];
+    for(let c=1;c<=nc;c++){ const row=[cutLabel(c)]; let last=null;
+      for(let r=1;r<=R;r++){ const m=roundCutScale(r)[c-1]; row.push(m!=null?Math.round(m):''); if(m!=null)last=m; }
+      row.push(last!=null?Math.round(last):''); aoa.push(row); }
+    tables.push({title:'Cut Scores by Round (median scale score)',aoa}); })();
+  // 2) Panelist agreement / spread
+  (()=>{ const aoa=[['Round','Cut','n','Median','Min','Max','Range','SD']];
+    for(let r=1;r<=R;r++) for(let c=1;c<=nc;c++){
+      const v=reportRaw.bm.filter(b=>b.round===r&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score);
+      if(!v.length) continue; const mn=Math.min(...v),mx=Math.max(...v);
+      aoa.push([r,c,v.length,r1(_med(v)),r1(mn),r1(mx),r1(mx-mn),r1(_sd(v))]); }
+    tables.push({title:'Panelist Agreement / Spread',aoa}); })();
+  // 3) Impact data
+  (()=>{ const head=['Round',...cfg.levels.map(l=>l.name+' (%)')]; const aoa=[head];
+    for(let r=1;r<=R;r++){ const pct=impactFor(roundCutScale(r)); aoa.push(['Round '+r,...(pct?pct.map(p=>r1(p)):cfg.levels.map(()=>'—'))]); }
+    tables.push({title:'Impact Data (percent of students by level)',aoa}); })();
+  // 4) Medians by table (final round)
+  (()=>{ const fr=R;
+    const ts=[...new Set(reportRaw.bm.filter(b=>b.round===fr).map(b=>(b.panelists&&b.panelists.table_no)||'—'))].sort();
+    const head=['Table']; for(let c=1;c<=nc;c++)head.push('Cut '+c); const aoa=[head];
+    ts.forEach(t=>{ const row=['Table '+t];
+      for(let c=1;c<=nc;c++){ const v=reportRaw.bm.filter(b=>b.round===fr&&b.cut_number===c&&((b.panelists&&b.panelists.table_no)||'—')===t&&b.scale_score!=null).map(b=>+b.scale_score); row.push(v.length?Math.round(_med(v)):''); }
+      aoa.push(row); });
+    const rr=['Whole room']; for(let c=1;c<=nc;c++){ const v=reportRaw.bm.filter(b=>b.round===fr&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score); rr.push(v.length?Math.round(_med(v)):''); }
+    aoa.push(rr);
+    tables.push({title:'Medians by Table — Final Round '+fr,aoa}); })();
+  // 5) Panelist appendix (final round scale per cut)
+  (()=>{ const fr=R; const head=['Panelist','Table']; for(let c=1;c<=nc;c++)head.push('Cut '+c); const aoa=[head];
+    const seen=new Map(); reportRaw.bm.filter(b=>b.round===fr).forEach(b=>{ if(!seen.has(b.panelist_id))seen.set(b.panelist_id,b.panelists||{}); });
+    [...seen.entries()].forEach(([pid,p])=>{ const nm=(((p.first_name||'')+' '+(p.last_name||'')).trim())||'Panelist';
+      const row=[nm,p.table_no||'—'];
+      for(let c=1;c<=nc;c++){ const b=reportRaw.bm.find(x=>x.panelist_id===pid&&x.round===fr&&x.cut_number===c); row.push(b&&b.scale_score!=null?Math.round(+b.scale_score):''); }
+      aoa.push(row); });
+    tables.push({title:'Panelist Cut Scores — Final Round '+fr+' (appendix)',aoa}); })();
+  return tables;
+}
+function reports(){
+  if(!USE_SB) return `<h2 class="h">Reports</h2><p class="lede">Requires the database connection.</p>`;
+  if(!isAdmin()) return `<h2 class="h">Reports</h2><p class="lede">Admins only.</p>`;
+  const tables=reportTables();
+  const tablesHtml=tables.map(t=>{
+    const head=t.aoa[0].map(h=>`<th>${escHtml(String(h))}</th>`).join('');
+    const body=t.aoa.slice(1).map(r=>'<tr>'+r.map((c,i)=>`<td${i===0?' style="text-align:left"':''}>${escHtml(String(c))}</td>`).join('')+'</tr>').join('');
+    return `<div class="card"><h3>${escHtml(t.title)}</h3><div style="overflow-x:auto"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
+  }).join('');
+  const cg=crossGradeTables();
+  const cgHtml=cg.map(t=>{
+    const head=t.aoa[0].map(h=>`<th>${escHtml(String(h))}</th>`).join('');
+    const body=t.aoa.slice(1).map(r=>'<tr>'+r.map((c,i)=>`<td${i===0?' style="text-align:left"':''}>${escHtml(String(c))}</td>`).join('')+'</tr>').join('');
+    return `<div class="card"><h3>${escHtml(t.title)}</h3><div style="overflow-x:auto"><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`;
+  }).join('');
+  return `<h2 class="h">Reports &amp; Export</h2>
+  <p class="lede">Technical-report tables from live data. The summary below covers every grade by content area; the detailed tables are for the active booklet (<b>${escHtml(cfg.formName||cfg.groupName||'—')}</b>) — switch the Form selector above to detail another grade.</p>
+  <div class="card" style="background:var(--light-green)"><h3>Download everything</h3>
+    <div class="legend" style="margin-bottom:8px">All grades, all tables, in one file.</div>
+    <button class="cta" onclick="exportAllXLSX()">All grades → Excel (one workbook)</button>
+    <button class="cta ghost" onclick="exportAllDoc()">All grades → Word (one document)</button>
+  </div>
+  ${cg.length?('<h3 style="font-family:\'Arial Black\';color:var(--dark-green)">Final cut scores by grade</h3>'+cgHtml):''}
+  <h3 style="font-family:'Arial Black';color:var(--dark-green)">Detail — ${escHtml(cfg.formName||cfg.groupName||'active booklet')}</h3>
+  <div style="margin-bottom:12px"><button class="cta" onclick="exportReportXLSX()">This booklet → Excel</button> <button class="cta ghost" onclick="exportReportDoc()">This booklet → Word</button></div>
+  ${tables.length?tablesHtml:'<div class="card"><p style="color:var(--muted)">No bookmark data yet for this booklet.</p></div>'}`;
+}
+function reportFileBase(){ return 'StandardSetting_'+String(cfg.formName||cfg.groupName||'report').replace(/[^a-z0-9]+/gi,'_'); }
+async function exportReportXLSX(){
+  try{ await ensureXLSX(); }catch(e){ alert(e.message); return; }
+  const tables=reportTables(); if(!tables.length){alert('No data to export yet.');return;}
+  const wb=XLSX.utils.book_new();
+  tables.forEach((t,i)=>{ const ws=XLSX.utils.aoa_to_sheet([[t.title],[],...t.aoa]); XLSX.utils.book_append_sheet(wb,ws,'Table '+(i+1)); });
+  XLSX.writeFile(wb, reportFileBase()+'.xlsx');
+}
+function exportReportDoc(){
+  const tables=reportTables(); if(!tables.length){alert('No data to export yet.');return;}
+  const DG='#1A5025';
+  const style='<style>body{font-family:Verdana,sans-serif;color:#333}h1{font-family:"Arial Black";color:'+DG+'}h2{font-family:"Arial Black";color:'+DG+';border-bottom:2px solid '+DG+';padding-bottom:4px}table{border-collapse:collapse;width:100%;margin-bottom:18px}th{background:'+DG+';color:#fff;padding:6px;border:1px solid #BBCABB}td{padding:5px;border:1px solid #BBCABB}tr:nth-child(even) td{background:#E8F0E8}</style>';
+  let body='<h1>Standard Setting — Technical Report Tables</h1><p><i>'+escHtml(cfg.workshopTitle||'')+' · '+escHtml(cfg.formName||cfg.groupName||'')+'</i></p>';
+  tables.forEach(t=>{ body+='<h2>'+escHtml(t.title)+'</h2><table><thead><tr>'+t.aoa[0].map(h=>'<th>'+escHtml(String(h))+'</th>').join('')+'</tr></thead><tbody>'
+    +t.aoa.slice(1).map(r=>'<tr>'+r.map((c,i)=>'<td'+(i===0?' style="text-align:left"':'')+'>'+escHtml(String(c))+'</td>').join('')+'</tr>').join('')+'</tbody></table>'; });
+  const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8">'+style+'</head><body>'+body+'</body></html>';
+  const blob=new Blob(['﻿'+html],{type:'application/msword'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=reportFileBase()+'.doc'; a.click();
+}
+/* ----- all grades (whole workshop) ----- */
+let reportAll=null;   // [{id,name,grade,content_area,bm:[],impact:[]}] for every form
+async function loadReportAllSB(){
+  reportAll=null;
+  const {data:forms}=await SB.from('forms').select('id,name,grade,groups(content_area,grade)');
+  const {data:bm}=await SB.from('bookmarks').select('round,cut_number,scale_score,panelist_id,form_id,panelists(first_name,last_name,table_no)');
+  const {data:imp}=await SB.from('impact_scores').select('form_id,scale_score,n_students');
+  const byForm={};
+  (forms||[]).forEach(f=>{ byForm[f.id]={id:f.id,name:f.name,grade:f.grade,content_area:(f.groups&&f.groups.content_area)||'',bm:[],impact:[]}; });
+  (bm||[]).forEach(b=>{ if(byForm[b.form_id]) byForm[b.form_id].bm.push(b); });
+  (imp||[]).forEach(x=>{ if(byForm[x.form_id]) byForm[x.form_id].impact.push(x); });
+  reportAll=Object.values(byForm).sort((a,b)=> (a.content_area||'').localeCompare(b.content_area||'') || gradeNum(a.grade)-gradeNum(b.grade));
+}
+function reportTablesFor(data){ const s=reportRaw; reportRaw=data; const t=reportTables(); reportRaw=s; return t; }   // reuse the per-form builder
+function crossGradeTables(){
+  if(!reportAll) return [];
+  const nc=nCuts();
+  const byCA={}; reportAll.forEach(f=>{ (byCA[f.content_area||'—']=byCA[f.content_area||'—']||[]).push(f); });
+  const out=[];
+  Object.keys(byCA).sort().forEach(ca=>{
+    const forms=byCA[ca].filter(f=>f.bm.length);
+    if(!forms.length) return;
+    const head=['Grade']; for(let c=1;c<=nc;c++)head.push('Cut '+c+': '+cfg.levels[c-1].name+' → '+cfg.levels[c].name);
+    const aoa=[head];
+    forms.forEach(f=>{ const maxR=Math.max(1,...f.bm.map(b=>b.round||1)); const row=[f.grade||f.name||'—'];
+      for(let c=1;c<=nc;c++){ const v=f.bm.filter(b=>b.round===maxR&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score); row.push(v.length?Math.round(_med(v)):''); }
+      aoa.push(row); });
+    out.push({title:'Final Cut Scores by Grade — '+ca, aoa});
+  });
+  return out;
+}
+function _tableHtml(t){
+  return '<h2>'+escHtml(t.title)+'</h2><table><thead><tr>'+t.aoa[0].map(h=>'<th>'+escHtml(String(h))+'</th>').join('')+'</tr></thead><tbody>'
+    +t.aoa.slice(1).map(r=>'<tr>'+r.map((c,i)=>'<td'+(i===0?' style="text-align:left"':'')+'>'+escHtml(String(c))+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
+}
+function _docStyle(){const DG='#1A5025';return '<style>body{font-family:Verdana,sans-serif;color:#333}h1{font-family:"Arial Black";color:'+DG+'}h2{font-family:"Arial Black";color:'+DG+';border-bottom:2px solid '+DG+';padding-bottom:4px}table{border-collapse:collapse;width:100%;margin-bottom:18px}th{background:'+DG+';color:#fff;padding:6px;border:1px solid #BBCABB}td{padding:5px;border:1px solid #BBCABB}tr:nth-child(even) td{background:#E8F0E8}</style>';}
+function _downloadDoc(bodyHtml,name){
+  const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8">'+_docStyle()+'</head><body>'+bodyHtml+'</body></html>';
+  const blob=new Blob(['﻿'+html],{type:'application/msword'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click();
+}
+async function exportAllXLSX(){
+  try{ await ensureXLSX(); }catch(e){ alert(e.message); return; }
+  if(!reportAll){alert('Report data is still loading — try again in a moment.');return;}
+  const wb=XLSX.utils.book_new();
+  crossGradeTables().forEach((t,i)=>{ const ws=XLSX.utils.aoa_to_sheet([[t.title],[],...t.aoa]); XLSX.utils.book_append_sheet(wb,ws,('Summary '+(i+1)).slice(0,31)); });
+  reportAll.forEach((f,i)=>{ if(!f.bm.length) return;
+    let aoa=[[(f.content_area||'')+' · '+(f.grade||f.name||'')],[]];
+    reportTablesFor(f).forEach(t=>{ aoa.push([t.title]); aoa.push(...t.aoa); aoa.push([]); });
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    XLSX.utils.book_append_sheet(wb,ws,('F'+(i+1)+' '+(f.grade||'')).replace(/[^A-Za-z0-9 ]/g,'').slice(0,31)); });
+  if(!wb.SheetNames.length){alert('No data to export yet.');return;}
+  XLSX.writeFile(wb,'StandardSetting_AllGrades.xlsx');
+}
+function exportAllDoc(){
+  if(!reportAll){alert('Report data is still loading — try again in a moment.');return;}
+  let body='<h1>Standard Setting — Technical Report Tables (All Grades)</h1><p><i>'+escHtml(cfg.workshopTitle||'')+'</i></p>';
+  const cg=crossGradeTables(); cg.forEach(t=>{ body+=_tableHtml(t); });
+  let any=cg.length;
+  reportAll.forEach(f=>{ if(!f.bm.length) return; any=true;
+    body+='<h1 style="page-break-before:always">'+escHtml((f.content_area||'')+' · '+(f.grade||f.name||''))+'</h1>';
+    reportTablesFor(f).forEach(t=>{ body+=_tableHtml(t); }); });
+  if(!any){alert('No data to export yet.');return;}
+  _downloadDoc(body,'StandardSetting_AllGrades.doc');
+}
+
+/* ---------- Groups / rooms (facilitator) ---------- */
+function groups(){
+  if(!USE_SB) return `<h2 class="h">Groups</h2><p class="lede">Groups require the database connection.</p>`;
+  const rows=sbGroups.map(g=>`<tr>
+    <td style="text-align:left">${escHtml(g.name||((g.content_area||'')+' · '+(g.grade||'')))} ${g.id===currentGroupId?'<span class="answered">active</span>':''}</td>
+    <td>${escHtml(g.content_area||'')}</td><td>${escHtml(g.grade||'')}</td>
+    <td><button class="cta ${g.id===currentGroupId?'':'ghost'} small" onclick="switchGroup('${g.id}')">${g.id===currentGroupId?'Active':'Set as active'}</button></td></tr>`).join('');
+  return `<h2 class="h">Groups (rooms)</h2>
+  <p class="lede">Each room is a content area × grade <b>band</b> where panelists sit. Inside a room, add a <b>form</b> per individual grade — each form has its own booklet, item map, rounds, and results. Choose a room, then a form; imports and results target the active form.</p>
+  <div class="card"><h3>Set up rooms</h3>
+    <button class="cta" onclick="createGroupsFromLists()">Create groups from content areas × grades</button>
+    <label class="cta ghost" style="cursor:pointer">Import group facilitators (CSV)<input type="file" accept=".csv,text/csv" style="display:none" onchange="onImportFacilitatorsCSV(this)"></label>
+    <div class="legend">Rooms come from the content areas &amp; grades in Workshop Setup. Facilitator CSV columns: <code>first_name, last_name, email, email2, content_area, grade</code> (one per room).</div>
+  </div>
+  <div class="card"><h3>Rooms (${sbGroups.length})</h3>
+    <table><thead><tr><th style="text-align:left">Room</th><th>Content area</th><th>Grade band</th><th></th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="4" style="color:#bbb">No rooms yet — click “Create groups”.</td></tr>'}</tbody></table></div>
+  ${currentGroupId?`<div class="card"><h3>Forms (grades) in the active room</h3>
+    <div class="legend" style="margin-bottom:8px">Active room: <b>${escHtml(cfg.groupName||'—')}</b>. Add one form per individual grade (e.g., Year 3, Year 4). Item maps, images, rounds, and results are per form.</div>
+    <table><thead><tr><th style="text-align:left">Form</th><th>Grade</th><th>Round</th><th>Release</th><th></th></tr></thead>
+    <tbody>${sbForms.map(f=>`<tr><td style="text-align:left">${escHtml(f.name||f.grade||'')} ${f.id===currentFormId?'<span class="answered">active</span>':''}</td><td>${escHtml(f.grade||'')}</td><td>R${f.current_round||1}</td><td>${f.results_released?'released':'held'}</td><td><button class="cta ${f.id===currentFormId?'':'ghost'} small" onclick="switchForm('${f.id}')">${f.id===currentFormId?'Active':'Set active'}</button></td></tr>`).join('')||'<tr><td colspan="5" style="color:#bbb">No forms yet.</td></tr>'}</tbody></table>
+    <div class="fld" style="max-width:320px;margin-top:10px"><label>New form — grade label (e.g., Year 3)</label><input type="text" id="nf_grade"></div>
+    <button class="cta" onclick="addFormFromInput()">Add form</button>
+  </div>`:''}`;
+}
+function addFormFromInput(){
+  const grade=(document.getElementById('nf_grade').value||'').trim();
+  if(!grade){alert('Enter a grade label.');return;}
+  addFormSB(grade);
+}
+async function addFormSB(grade){
+  const ca=cfg.groupContentArea||'';
+  const {error}=await SB.from('forms').insert({group_id:currentGroupId,content_area:ca,grade:grade,name:(ca?ca+' · ':'')+grade,rounds:cfg.rounds,current_round:1,results_released:false,status:'active'});
+  if(error){alert('Add form failed: '+error.message);return;}
+  await loadFormsSB(currentGroupId); render();
+  toast('Added form: '+grade);
+}
+async function onImportFacilitatorsCSV(input){
+  const f=input.files[0]; if(!f)return;
+  let text; try{text=await f.text();}catch(e){alert('Could not read file.');return;}
+  const rows=parseCSV(text); if(rows.length<2){alert('No data rows in that file.');return;}
+  const hdr=rows[0].map(h=>(h||'').trim().toLowerCase());
+  const ci={first:hdr.indexOf('first_name'),last:hdr.indexOf('last_name'),email:hdr.indexOf('email'),email2:hdr.indexOf('email2'),ca:hdr.indexOf('content_area'),grade:hdr.indexOf('grade')};
+  if(ci.email<0){alert("CSV needs an 'email' column.");return;}
+  await loadPanelistsSB();
+  const existing=new Set(sbPanelists.map(p=>(p.email||'').toLowerCase()));
+  const toAdd=[]; let skipped=0;
+  for(let r=1;r<rows.length;r++){const get=k=>ci[k]>=0?((rows[r][ci[k]]||'').trim()):'';const email=get('email');if(!email){skipped++;continue;}if(existing.has(email.toLowerCase())){skipped++;continue;}existing.add(email.toLowerCase());
+    toAdd.push({workshop_id:wid(),first_name:get('first'),last_name:get('last'),email,email2:get('email2')||null,content_area:get('ca'),grade:get('grade'),role:'group_facilitator',status:'active',group_id:groupIdFor(get('ca'),get('grade'))});}
+  if(!toAdd.length){alert('No new facilitators to add ('+skipped+' skipped).');return;}
+  const {error}=await SB.from('panelists').insert(toAdd);
+  if(error){alert('Import failed: '+error.message);return;}
+  await loadPanelistsSB();render();
+  alert('Added '+toAdd.length+' group facilitator(s)'+(skipped?(' ('+skipped+' skipped)'):'')+'. No invites sent.');
+}
+
+/* ---------- Panelists (facilitator registration) ---------- */
+function people(){
+  if(!USE_SB) return `<h2 class="h">Panelists</h2><p class="lede">Panelist registration requires the database connection (Supabase).</p>`;
+  // sort + group by content area / grade, then table, then name
+  const list=sbPanelists.slice().sort((a,b)=>
+    (a.content_area||'').localeCompare(b.content_area||'')||(a.grade||'').localeCompare(b.grade||'')||
+    String(a.table_no||'').localeCompare(String(b.table_no||''),undefined,{numeric:true})||(a.last_name||'').localeCompare(b.last_name||''));
+  let rows=''; let lastGroup=null;
+  list.forEach(p=>{
+    const grp=(p.content_area||'—')+' · '+(p.grade||'—');
+    if(grp!==lastGroup){ rows+=`<tr><td colspan="6" style="background:var(--dark-green);color:#fff;text-align:left;font-weight:bold">${escHtml(grp)}</td></tr>`; lastGroup=grp; }
+    const em=escHtml(p.email||'')+(p.email2?'<br><span style="color:var(--muted);font-size:11px">'+escHtml(p.email2)+'</span>':'');
+    rows+=`<tr>
+      <td style="text-align:left">${escHtml(((p.first_name||'')+' '+(p.last_name||'')).trim())||'<span style="color:#bbb">—</span>'}</td>
+      <td style="text-align:left">${em}</td>
+      <td>Table ${escHtml(p.table_no||'?')}</td>
+      <td>${p.role}</td>
+      <td>${p.auth_user_id?'<span class="answered">linked</span>':'<span class="pending">no login</span>'}</td>
+      <td style="white-space:nowrap">
+        <button class="cta ghost small" onclick="editPanelist('${p.id}')">Edit</button>
+        <button class="cta ghost small" onclick="invitePanelist('${(p.email||'').replace(/'/g,"\\'")}')">Send link</button>
+        <button class="cta ghost small" onclick="removePanelistSB('${p.id}')">Remove</button></td></tr>`;
+  });
+  const cas=[...new Set([...(cfg.contentAreas||[]), ...sbPanelists.map(p=>p.content_area).filter(Boolean)])];
+  const grs=[...new Set([...(cfg.grades||[]), ...sbPanelists.map(p=>p.grade).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  const caOpts=cas.map(x=>`<option value="${esc(x)}">`).join('');
+  const grOpts=grs.map(x=>`<option value="${esc(x)}">`).join('');
+  const e=editingId?sbPanelists.find(x=>x.id===editingId):null;
+  const v=(k,d)=>esc(e?(e[k]||''):(d||''));
+  return `<h2 class="h">Panelists</h2>
+  <p class="lede">Build your roster (add, edit, or import), then send each person a login link when you&#699;re ready.</p>
+  <div class="hintbar">Adding or importing panelists only builds the roster — <b>no emails are sent</b>. Invites go out only when you click "Send link" on a row.</div>
+  <div class="card"><h3>Bulk import from CSV</h3>
+    <label class="cta" style="cursor:pointer">Import panelists (CSV)<input type="file" accept=".csv,text/csv" style="display:none" onchange="onImportPanelistsCSV(this)"></label>
+    <button class="cta ghost" onclick="downloadPanelistTemplate()">Download CSV template</button>
+    <button class="cta ghost" onclick="fixRoomAssignments()">Fix room assignments</button>
+    <div class="legend">Columns: <code>first_name, last_name, email, email2, content_area, grade, table_no, role</code>. Duplicates (by email) are skipped. "Fix room assignments" links everyone to their room by content area + grade.</div>
+  </div>
+  <div class="card"><h3>${e?'Edit panelist':'Add a panelist'}</h3>
+    <div class="grid2">
+      <div class="fld"><label>First name</label><input type="text" id="np_first" value="${v('first_name')}"></div>
+      <div class="fld"><label>Last name</label><input type="text" id="np_last" value="${v('last_name')}"></div>
+      <div class="fld"><label>Email (primary — used for login)</label><input type="text" id="np_email" value="${v('email')}"></div>
+      <div class="fld"><label>Second email (optional)</label><input type="text" id="np_email2" value="${v('email2')}"></div>
+      <div class="fld"><label>Content area</label><input type="text" id="np_ca" list="caList" value="${e?v('content_area'):''}" placeholder="Choose…"><datalist id="caList">${caOpts}</datalist></div>
+      <div class="fld"><label>Grade / year band</label><input type="text" id="np_grade" list="grList" value="${e?v('grade'):''}" placeholder="Choose…"><datalist id="grList">${grOpts}</datalist></div>
+      <div class="fld"><label>Table (within the content-area/grade group)</label><input type="text" id="np_table" value="${e?v('table_no'):'1'}"></div>
+      <div class="fld"><label>Role</label><select id="np_role">
+        <option value="panelist" ${e&&e.role==='panelist'?'selected':''}>panelist</option>
+        <option value="group_facilitator" ${e&&e.role==='group_facilitator'?'selected':''}>group facilitator</option>
+        <option value="facilitator" ${e&&(e.role==='facilitator'||e.role==='admin')?'selected':''}>admin</option></select></div>
+    </div>
+    <button class="cta" onclick="submitPanelist()">${e?'Save changes':'Add panelist'}</button>
+    ${e?'<button class="cta ghost" onclick="cancelEdit()">Cancel</button>':''}
+  </div>
+  <div class="card"><h3>Workshop roster (${sbPanelists.length})</h3>
+    <div style="margin-bottom:10px"><button class="cta" onclick="inviteAllPanelists()">✉ Email sign-in links to all panelists</button> <span class="legend">Sends a magic link to every <b>panelist</b> below (facilitators/admins are skipped).</span></div>
+    <table><thead><tr><th style="text-align:left">Name</th><th style="text-align:left">Email</th><th>Table</th><th>Role</th><th>Login</th><th></th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="6" style="color:#bbb">No panelists yet.</td></tr>'}</tbody></table></div>`;
+}
+function editPanelist(id){ editingId=id; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+function cancelEdit(){ editingId=null; render(); }
+
+/* ---------- OIB manager (facilitator): import / export / screenshots ---------- */
+function oibmgr(){
+  const rows=items().map(it=>{
+    const m=it.display?it.display.mode:'—';
+    const badge = m==='image'?'<span class="answered">screenshot</span>'
+               : m==='json'?'<span class="chip">in-app</span>'
+               : '<span class="pending">hidden</span>';
+    const label = it.brief || (it.display&&it.display.stem? it.display.stem.slice(0,60) : '');
+    return `<tr><td>${it.pos}</td><td style="text-align:left">${escHtml(label)}</td>
+      <td>${badge}</td>
+      <td><label class="cta ghost small" style="cursor:pointer;margin:0">Attach screenshot<input type="file" accept="image/*" style="display:none" onchange="onAttachShot(${it.pos},this)"></label></td></tr>`;
+  }).join('');
+  return `<h2 class="h">OIB / Items</h2>
+  <p class="lede">Load the ordered item booklet from a JSON file, attach screenshots to items, or export the current set.</p>
+  <div class="card"><h3>Import item map (Excel / CSV)</h3>
+    <label class="cta" style="cursor:pointer">Import item map<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="onImportItemMap(this)"></label>
+    <button class="cta ghost" onclick="downloadItemMapTemplate()">Download item map template</button>
+    <div class="hintbar" style="margin-top:12px">Reads most state item-map layouts automatically (it finds the order, item id, standard, score point, item type, scale, and key columns wherever they are). It shows you what it detected before importing. Item content (PNG/JPG or JSON) is linked separately.</div>
+  </div>
+  <div class="card"><h3>Impact distribution (for impact data)</h3>
+    <label class="cta" style="cursor:pointer">Import impact distribution (CSV)<input type="file" accept=".csv,text/csv" style="display:none" onchange="onImportImpactCSV(this)"></label>
+    <button class="cta ghost" onclick="downloadImpactTemplate()">Download template</button>
+    <div class="hintbar" style="margin-top:12px">The student score distribution for the <b>active form</b>. Columns: <code>Scale Score, Number of Students, Percent</code> (percent optional). Impact % is computed from this against each round's median cut scores.</div>
+  </div>
+  <div class="card"><h3>Upload item images (bulk)</h3>
+    <label class="cta" style="cursor:pointer">Upload images<input type="file" accept="image/*" multiple style="display:none" onchange="onUploadItemImages(this)"></label>
+    <button class="cta ghost" onclick="clearItemImagesSB()">Remove all uploaded images</button>
+    <div class="hintbar" style="margin-top:12px">Select all your screenshots at once. Each uploads to a <b>private</b> Supabase bucket and is auto-linked to its item by the number in the filename (e.g., <code>Math_OIB_7.png</code> → item 7) or by item id. Images are shown to panelists via short-lived <b>signed URLs</b> (no public link). Run <code>migrate_storage.sql</code> once first.</div>
+  </div>
+  <div class="card"><h3>Import / export (JSON)</h3>
+    <label class="cta" style="cursor:pointer">Import OIB (JSON)<input type="file" accept=".json,application/json" style="display:none" onchange="onImportOIB(this)"></label>
+    ${USE_SB?'<button class="cta" onclick="saveItemsSBButton()">Save items to database</button>':''}
+    <button class="cta ghost" onclick="exportOIB()">Export OIB (JSON)</button>
+    <button class="cta ghost" onclick="resetOIB()">Reset to oib.js</button>
+    <div class="hintbar" style="margin-top:12px">JSON must be an array of item objects (or <code>{"items":[ ... ]}</code>). Each item needs at least a <code>pos</code>; see the schema at the top of <code>oib.js</code>. Screenshots may be referenced by path (<code>images/item3.png</code>) or attached below — attached images are embedded with the item, so they survive export/import.</div>
+  </div>
+  <div class="card"><h3>Items (${itemCount()})</h3>
+    <table><thead><tr><th>#</th><th style="text-align:left">Item</th><th>Display</th><th>Screenshot</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+  </div>`;
+}
+/* ---- Item map importer (Excel/CSV) with column auto-detection ---- */
+function imNorm(s){return String(s==null?'':s).replace(/\s+/g,' ').trim().toLowerCase();}
+function detectItemMapCols(headers){
+  const H=headers.map(imNorm);
+  const isQ=h=>(h.indexOf('what does')>=0||h.indexOf('why is')>=0||h.indexOf('more difficult')>=0||h.indexOf('what do you know')>=0);
+  function find(keys,avoid){avoid=avoid||[];
+    for(let i=0;i<H.length;i++){const h=H[i]; if(isQ(h))continue;
+      if(keys.some(k=>h.indexOf(k)>=0)&&!avoid.some(a=>h.indexOf(a)>=0)) return i;}
+    return -1;}
+  const m={};
+  m.order=find(['oib','order position','order no.','order']);
+  m.item_id=find(['item_id','item number','itemid']); if(m.item_id<0)m.item_id=find(['item'],['item type']);
+  m.scale=find(['rp50','rp ','location','theta','logit','measure']); if(m.scale<0)m.scale=find(['score'],['p(','score pt','scorept','score point']);
+  m.score_point=find(['pts','score pt','scorept','score point','points'],['p(']);
+  m.standard=find(['content standard','standard']); if(m.standard<0)m.standard=find(['domain']);
+  m.item_type=find(['item type','type'],['story']);
+  m.key=find(['key','answer','correct']);
+  m.pval=find(['p(','p-value','pval','p value']);
+  m.content=find(['content_file','content file','image','file','filename','png','jpg']);
+  return m;
+}
+async function onImportItemMap(input){
+  const f=input.files[0]; if(!f)return;
+  try{ await ensureXLSX(); }catch(e){ alert(e.message); return; }
+  let grid; try{ const wb=XLSX.read(await f.arrayBuffer(),{type:'array'}); const ws=wb.Sheets[wb.SheetNames[0]]; grid=XLSX.utils.sheet_to_json(ws,{header:1,blankrows:false,defval:''}); }
+  catch(e){ alert('Could not read file: '+e.message); return; }
+  if(!grid||!grid.length){alert('That sheet looks empty.');return;}
+  let hr=0;
+  for(let i=0;i<Math.min(8,grid.length);i++){const j=grid[i].map(imNorm).join(' '); if(j.indexOf('what does')>=0||j.indexOf('oib')>=0||j.indexOf('order position')>=0){hr=i;break;}}
+  const headers=grid[hr]; const m=detectItemMapCols(headers);
+  if(m.order<0){alert("Couldn't find an order-of-difficulty column (looked for OIB / Order). Please check the header row.");return;}
+  const get=(row,k)=>m[k]>=0?row[m[k]]:'';
+  const toNum=v=>{const n=parseFloat(v);return isNaN(n)?null:n;};
+  const newItems=[];
+  for(let i=hr+1;i<grid.length;i++){
+    const row=grid[i]; if(!row||row.every(x=>x===''||x==null))continue;
+    const ord=toNum(get(row,'order')); if(ord==null)continue;
+    const std=String(get(row,'standard')||'').trim(), typ=String(get(row,'item_type')||'').trim();
+    newItems.push({
+      pos:Math.round(ord), page:Math.round(ord),
+      external_id:String(get(row,'item_id')||'').trim()||null,
+      scale:toNum(get(row,'scale')),
+      scorePoint:String(get(row,'score_point')||'').trim()||'1/1',
+      strand:std, itemType:typ, pval:toNum(get(row,'pval')),
+      answer_key:String(get(row,'key')||'').trim()||null,
+      brief:(std||typ||('Item '+Math.round(ord))).slice(0,60),
+      display:{mode:'hidden'},
+      _content:String(get(row,'content')||'').trim()
+    });
+  }
+  if(!newItems.length){alert('No item rows found below the header.');return;}
+  newItems.sort((a,b)=>a.pos-b.pos);
+  const lbl=k=>m[k]>=0?('"'+imNorm(headers[m[k]]).slice(0,28)+'"'):'(none)';
+  const msg='Detected columns:\n  order = '+lbl('order')+'\n  item id = '+lbl('item_id')+'\n  scale = '+lbl('scale')+'\n  score point = '+lbl('score_point')+'\n  standard = '+lbl('standard')+'\n  item type = '+lbl('item_type')+'\n  key = '+lbl('key')+'\n\n'+newItems.length+' items found. Import and replace the current booklet?';
+  if(!confirm(msg))return;
+  oib=newItems; saveOIB(); initBookmarks(); reviewIdx=0; render();
+  if(USE_SB){ const ok=await saveItemsSB(); if(ok){ toast('✓ Item map uploaded — '+newItems.length+' items saved for this room'); } else { alert('Imported locally, but the database save failed.'); } }
+  else toast('✓ Imported '+newItems.length+' items (local)');
+}
+async function signImages(){
+  if(!USE_SB)return;
+  const imgs=oib.filter(it=>it.display&&it.display.mode==='image'&&it.display.path);
+  if(!imgs.length)return;
+  const paths=[...new Set(imgs.map(it=>it.display.path))];
+  const {data,error}=await SB.storage.from('item-images').createSignedUrls(paths,60*60*6); // 6-hour links
+  if(error){console.error('sign urls',error);return;}
+  const map={}; (data||[]).forEach(d=>{ if(d.signedUrl) map[d.path]=d.signedUrl; });
+  imgs.forEach(it=>{ if(map[it.display.path]) it.display.src=map[it.display.path]; });
+}
+async function clearItemImagesSB(){
+  if(!USE_SB)return;
+  if(!confirm('Delete ALL uploaded item images from storage and unlink them from items?'))return;
+  const {data:list,error}=await SB.storage.from('item-images').list(wid(),{limit:1000});
+  if(error){alert('Could not list images: '+error.message);return;}
+  const paths=(list||[]).map(o=>wid()+'/'+o.name);
+  if(paths.length){ const rm=await SB.storage.from('item-images').remove(paths); if(rm.error){alert('Delete failed: '+rm.error.message);return;} }
+  items().forEach(it=>{ if(it.display&&it.display.mode==='image') it.display={mode:'hidden'}; });
+  await saveItemsSB(); render();
+  alert('Removed '+paths.length+' image file(s) and unlinked them from items.');
+}
+async function onUploadItemImages(input){
+  const files=Array.from(input.files||[]); if(!files.length)return;
+  if(!USE_SB){alert('Image upload requires the database connection.');return;}
+  const W=wid();
+  const byPos={}, byId={};
+  items().forEach(it=>{byPos[it.pos]=it; if(it.external_id)byId[String(it.external_id).toLowerCase()]=it;});
+  let uploaded=0, matched=0; const unmatched=[];
+  for(const f of files){
+    const base=f.name.replace(/\.[^.]+$/,'');
+    const path=W+'/'+f.name;                       // store the PATH (private bucket)
+    const up=await SB.storage.from('item-images').upload(path,f,{upsert:true,contentType:f.type||'image/png'});
+    if(up.error){console.error('upload',f.name,up.error); unmatched.push(f.name+' (upload failed: '+up.error.message+')'); continue;}
+    uploaded++;
+    let it=byId[base.toLowerCase()];
+    if(!it){ const mm=base.match(/(\d+)\s*$/); if(mm) it=byPos[parseInt(mm[1],10)]; }
+    if(it){ it.display={mode:'image',path:path,alt:'Item '+it.pos}; matched++; }
+    else unmatched.push(f.name);
+  }
+  if(matched){ await saveItemsSB(); await signImages(); }
+  render();
+  alert('Uploaded '+uploaded+' image(s); linked '+matched+' to items (served via expiring signed URLs).'+(unmatched.length?('\n\nNot linked ('+unmatched.length+'): '+unmatched.slice(0,8).join(', ')+(unmatched.length>8?' …':'')):''));
+}
+function downloadImpactTemplate(){
+  const csv="Scale Score,Number of Students,Percent\n400,120,1.5\n405,180,2.3\n410,260,3.3\n";
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='impact_distribution_template.csv';a.click();
+}
+async function onImportImpactCSV(input){
+  const f=input.files[0]; if(!f)return;
+  if(!USE_SB){alert('Requires the database connection.');return;}
+  if(!currentFormId){alert('Select a form first (Groups / form switcher).');return;}
+  let text; try{text=await f.text();}catch(e){alert('Could not read file.');return;}
+  const rows=parseCSV(text); if(rows.length<2){alert('No data rows.');return;}
+  const hdr=rows[0].map(h=>(h||'').trim().toLowerCase());
+  const find=keys=>{for(let i=0;i<hdr.length;i++){if(keys.some(k=>hdr[i].indexOf(k)>=0))return i;}return -1;};
+  const ci={scale:find(['scale','score']),n:find(['number','count','students','freq','n_']),pct:find(['percent','pct','%'])};
+  if(ci.scale<0){alert("CSV needs a 'Scale Score' column.");return;}
+  const recs=[];
+  for(let r=1;r<rows.length;r++){const g=k=>ci[k]>=0?(rows[r][ci[k]]||'').trim():'';const s=parseFloat(g('scale'));if(isNaN(s))continue;
+    recs.push({form_id:currentFormId,scale_score:s,n_students:g('n')!==''?parseFloat(g('n')):null,percent:g('pct')!==''?parseFloat(g('pct')):null});}
+  if(!recs.length){alert('No valid score rows found.');return;}
+  await SB.from('impact_scores').delete().eq('form_id',currentFormId);
+  const {error}=await SB.from('impact_scores').insert(recs);
+  if(error){alert('Import failed: '+error.message);return;}
+  await loadMediansSB(); render();
+  toast('✓ Impact distribution loaded — '+recs.length+' score points');
+}
+function downloadItemMapTemplate(){
+  const csv="order,item_id,standard,score_point,key,item_type,scale_location,content_file\n"
+   +"1,ITEM-0001,5.NBT.1,1 of 1,B,Multiple Choice,420,item-0001.png\n"
+   +"2,ITEM-0002,5.NBT.2,1 of 2,,Constructed Response,440,item-0002.png\n";
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='item_map_template.csv';a.click();
+}
+function onImportOIB(input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const data=JSON.parse(r.result);
+      const arr=Array.isArray(data)?data:(data.items||data.OIB_ITEMS);
+      if(!Array.isArray(arr)||!arr.length) throw new Error("Expected an array of items, or {items:[...]}.");
+      arr.forEach((it,i)=>{ if(it.pos==null) it.pos=i+1; if(!it.display) it.display={mode:"hidden"}; });
+      arr.sort((a,b)=>a.pos-b.pos);
+      oib=arr; saveOIB(); initBookmarks(); reviewIdx=0;
+      render();
+      if(USE_SB){ saveItemsSB().then(ok=>alert("Imported "+arr.length+" items"+(ok?" and saved to the database.":" (local only — database save failed)."))); }
+      else { alert("Imported "+arr.length+" items."); }
+    }catch(e){ alert("Import failed: "+e.message); }
+  };
+  r.readAsText(f);
+}
+function exportOIB(){
+  const blob=new Blob([JSON.stringify(oib,null,2)],{type:"application/json"});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download="oib.json";a.click();
+}
+function resetOIB(){
+  if(confirm("Discard imported items and reload from oib.js?")){
+    try{localStorage.removeItem(OIB_KEY);}catch(e){}
+    oib=(window.OIB_ITEMS||[]).map(x=>x); initBookmarks(); reviewIdx=0; render();
+  }
+}
+function onAttachShot(pos,input){
+  const f=input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    const it=items().find(x=>x.pos===pos);
+    if(it){ it.display={mode:"image",src:r.result,alt:"Item "+pos+" screenshot"}; saveOIB(); render(); }
+  };
+  r.readAsDataURL(f);
+}
+
+function setup(){
+  return `<h2 class="h">Workshop Setup</h2>
+  <p class="lede">Configure this workshop. Changes apply live to the panelist app. When you&#699;re happy, export <code>config.js</code> to save it for next time.</p>
+  <div class="hintbar">The achievement-level scheme is fully configurable: add or remove levels (2–5). The number of cut scores is always one less than the number of levels.</div>
+  <div class="card"><h3>Identity</h3>
+    <div class="grid2">
+      <div class="fld"><label>Workshop title</label><input type="text" value="${esc(cfg.workshopTitle)}" oninput="cf('workshopTitle',this.value)"></div>
+      <div class="fld"><label>Subtitle</label><input type="text" value="${esc(cfg.subtitle)}" oninput="cf('subtitle',this.value)"></div>
+      <div class="fld"><label>Panelist greeting</label><input type="text" value="${esc(cfg.greeting||'Hello')}" oninput="cf('greeting',this.value)" placeholder="Hello"></div>
+      <div class="fld"><label>Grade label (e.g., Grade, Year group)</label><input type="text" value="${esc(cfg.gradeLabel||'Grade')}" oninput="cf('gradeLabel',this.value)" placeholder="Grade"></div>
+      <div class="fld"><label>Rounds</label><input type="number" min="1" max="6" value="${cfg.rounds}" oninput="cf('rounds',+this.value)"></div>
+      <div class="fld"><label>Current round</label><input type="number" min="1" max="${cfg.rounds}" value="${cfg.currentRound}" oninput="cf('currentRound',+this.value)"></div>
+    </div>
+  </div>
+  <div class="card"><h3>Content areas &amp; grades</h3>
+    <div class="fld"><label>Content areas (comma-separated)</label><input type="text" value="${esc((cfg.contentAreas||[]).join(', '))}" oninput="cfList('contentAreas',this.value)"></div>
+    <div class="fld"><label>Grades / year bands (comma-separated)</label><input type="text" value="${esc((cfg.grades||[]).join(', '))}" oninput="cfList('grades',this.value)"></div>
+    <div class="legend">These fill the dropdowns on the Panelists screen. Remember to Save workshop to database.</div>
+  </div>
+  <div class="card"><h3>Options</h3>
+    <label style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px"><input type="checkbox" ${cfg.showImpact!==false?'checked':''} onchange="cf('showImpact',this.checked)"> Show impact data to panelists <span class="legend" style="margin:0">(uncheck if this study doesn&#699;t use impact)</span></label>
+    <div class="legend" style="margin-top:6px">Remember to <b>Save workshop to database</b> for this to apply to everyone.</div>
+  </div>
+  <div class="card"><h3>Item map columns (panelist view)</h3>
+    <div class="legend" style="margin-bottom:8px">Choose which columns panelists see on the Item Map.</div>
+    ${(()=>{const vis=Object.assign({},IMCOL_DEFAULT,cfg.itemMapColumns||{});
+      return [['page','Page'],['scale',cfg.booklet.rpLabel||'Scale'],['strand','Standard / strand'],['scorePoint','Score point'],['itemType','Item type'],['pval','Difficulty'],['notes','Their own notes']]
+      .map(([k,lab])=>`<label style="display:inline-flex;align-items:center;gap:6px;margin:4px 16px 4px 0;font-size:13.5px"><input type="checkbox" ${vis[k]?'checked':''} onchange="cfCol('${k}',this.checked)"> ${lab}</label>`).join('');})()}
+  </div>
+  <div class="card"><h3>Achievement levels (${cfg.levels.length})</h3>
+    <div class="lvlrow" style="font-size:11px;color:var(--muted);font-weight:bold"><span></span><span>NAME</span><span>SHORT LABEL</span><span>COLOR</span><span></span></div>
+    <div id="lvlrows">${cfg.levels.map((l,i)=>lvlRow(l,i)).join('')}</div>
+    <button class="cta ghost small" onclick="addLevel()" ${cfg.levels.length>=5?'disabled':''}>+ Add level</button>
+    <div class="legend">Cut scores: <b>${nCuts()}</b> (levels − 1).</div>
+  </div>
+  ${USE_SB?'<button class="cta" onclick="saveWorkshopSB()">Save workshop to database</button>':''}
+  <button class="cta ghost" onclick="exportConfig()">Export config.js</button>
+  <button class="cta ghost" onclick="resetCfg()">Reset to file defaults</button>`;
+}
+function lvlRow(l,i){
+  return `<div class="lvlrow">
+    <span style="text-align:center;color:var(--muted)">${i+1}</span>
+    <input type="text" value="${esc(l.name)}" oninput="lf(${i},'name',this.value)">
+    <input type="text" value="${esc(l.short)}" oninput="lf(${i},'short',this.value)">
+    <input type="color" value="${l.color}" oninput="lf(${i},'color',this.value)">
+    <button class="rm" onclick="rmLevel(${i})" ${cfg.levels.length<=2?'disabled title=\"minimum 2 levels\"':''}>✕</button>
+  </div>`;
+}
+function release(){
+  const on=cfg.resultsReleased;
+  // round controls
+  let roundCtrl='';
+  if(USE_SB){
+    const r=cfg.currentRound, R=cfg.rounds, vr=viewRound||r;
+    let rbtns=''; for(let k=1;k<=r;k++){ rbtns+=`<button class="cta ${k===vr?'':'ghost'} small" onclick="viewRoundSet(${k})">Round ${k}${k===r?' (live)':''}</button> `; }
+    roundCtrl=`<div class="card"><h3>Round</h3>
+      <div class="kv"><span>Current round</span><b>${r} of ${R}</b></div>
+      <div style="margin-top:10px"><span class="legend">View results for:</span><br>${rbtns}</div>
+      <div style="margin-top:12px">
+        <button class="cta small" onclick="advanceRoundSB()">Advance to round ${r+1} &rarr;</button>
+      </div>
+      <div class="callout" style="margin-top:8px">${cfg.resultsReleased
+        ? '✓ Round '+r+' results are released to panelists. You can advance when the panel is ready.'
+        : '⚠ Round '+r+' results are <b>not released</b>. Share results with the panel (toggle below) before advancing.'}</div>
+      <div class="legend">Viewing a past round here is just for you — it does not change anyone's round. Advancing gives panelists a fresh bookmarking pass (notes carry over; bookmarks start empty). Advancing past the planned ${R} rounds simply adds a round.</div>
+    </div>`;
+  }
+  // live medians table (facilitators see this any time)
+  let medTable='';
+  if(USE_SB){
+    let rows='';
+    for(let c=1;c<=nCuts();c++){
+      const m=sbMedians&&sbMedians[c];
+      rows+=`<tr><td>Cut ${c}: ${cfg.levels[c-1].name} → ${cfg.levels[c].name}</td>
+        <td>${m?Math.round(m.median_scale):'—'}</td>
+        <td>${m?Math.round(m.min_scale)+'–'+Math.round(m.max_scale):'—'}</td>
+        <td>${m?m.n:'0'}</td></tr>`;
+    }
+    medTable=`<div class="card"><h3>Group medians — round ${viewRound||cfg.currentRound} <span style="font-size:11px;color:var(--muted)">(facilitator view)</span></h3>
+      <table><thead><tr><th style="text-align:left">Cut</th><th>Median</th><th>Range</th><th>n</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="legend">Computed from panelist bookmarks for this round. Panelists can't see these until you release.</div></div>`;
+  }
+  return `<h2 class="h">Results &amp; Release</h2>
+  <p class="lede">Advance rounds and control when panelists can see the group median. Keep release off during active judging to avoid anchoring panelists.</p>
+  ${roundCtrl}
+  <div class="card"><h3>Release to panelists</h3>
+    <div class="switch ${on?'on':''}" onclick="toggleRelease()"><span class="track"><span class="knob"></span></span>
+      <span>${on?'Released — group median visible':'Held — panelists see only their own scores'}</span></div>
+    <div class="callout">${on
+      ? 'Panelists can now see the group median and spread on their <b>My Cut Scores</b> screen.'
+      : 'While held, the median column shows “—” and the group results are locked for every panelist.'}</div>
+    <button class="cta ghost small" onclick="setMode('panelist');goView('cuts')">Preview panelist view</button>
+  </div>
+  ${USE_SB&&currentFormId?(()=>{const closed=cfg.formStatus==='closed';return `<div class="card"><h3>Booklet access</h3>
+    <div class="switch ${closed?'on':''}" onclick="setFormStatus('${closed?'active':'closed'}')"><span class="track"><span class="knob"></span></span>
+      <span>${closed?'Closed — panelists cannot open this booklet':'Open — panelists can work this booklet'}</span></div>
+    <div class="callout">${closed
+      ? 'This booklet is locked. Panelists see it greyed out as “Closed” and cannot enter. Reopen if you need to make changes.'
+      : 'Once the final round cuts are set, close the booklet to lock panelists out of this form.'}</div>
+  </div>`})():''}
+  ${medTable}
+  ${tableMediansCard()}
+  ${USE_SB?resultsGraphics():''}
+  ${USE_SB?`<div class="card"><h3>Close &amp; archive workshop</h3>
+    <div class="legend" style="margin-bottom:8px">When the workshop is done: download a full backup first, then disable logins and clear the working data.</div>
+    <button class="cta" onclick="archiveWorkshop()">Download archive (JSON)</button>
+    <button class="cta ghost" onclick="setPanelistsStatus('disabled')">Disable panelist logins</button>
+    <button class="cta ghost" onclick="setPanelistsStatus('active')">Re-enable logins</button>
+    <button class="cta ghost" style="border-color:#c0392b;color:#c0392b" onclick="clearWorkshopData()">Clear workshop data</button>
+    <button class="cta ghost" style="border-color:#c0392b;color:#c0392b" onclick="clearRosterSB()">Clear roster (panelists &amp; group facilitators)</button>
+    <div class="legend">Clear workshop data removes responses/bookmarks/surveys. Clear roster also removes panelists and group facilitators (admins are kept).</div>
+    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+      <button class="cta" style="background:#c0392b;border-color:#c0392b" onclick="resetWholeWorkshop()">⟲ Clear EVERYTHING — start a new workshop</button>
+      <div class="legend">Wipes rooms, forms, item maps, panelists, all responses, achievement levels, and the content-area/grade lists — a blank slate to build a new workshop. Admin logins are kept. <b>Download the archive first.</b></div>
+    </div>
+  </div>`:''}`;
+}
+
+/* ---------- config mutators ---------- */
+function esc(s){return (s||'').replace(/"/g,'&quot;');}
+function cf(k,v){cfg[k]=v;persist();if(k==='workshopTitle'||k==='subtitle')paintHeader();}
+function cfList(k,val){cfg[k]=val.split(',').map(s=>s.trim()).filter(Boolean);persist();}
+function cfCol(k,on){cfg.itemMapColumns=Object.assign({},IMCOL_DEFAULT,cfg.itemMapColumns||{});cfg.itemMapColumns[k]=on;persist();}
+function lf(i,k,v){cfg.levels[i][k]=v;persist();}
+function addLevel(){
+  if(cfg.levels.length>=5)return;
+  cfg.levels.push({name:"New Level",short:"Level "+(cfg.levels.length+1),color:"#6aa84f",descriptor:"Describe this level."});
+  initBookmarks();persist();render();
+}
+function rmLevel(i){
+  if(cfg.levels.length<=2)return;
+  cfg.levels.splice(i,1);initBookmarks();activeCut=1;persist();render();
+}
+function toggleRelease(){
+  cfg.resultsReleased=!cfg.resultsReleased;persist();
+  const fm=sbForms.find(f=>f.id===currentFormId); if(fm)fm.results_released=cfg.resultsReleased;
+  if(USE_SB&&currentFormId){ SB.from('forms').update({results_released:cfg.resultsReleased}).eq('id',currentFormId).select().then(({data,error})=>{
+    if(error){ alert('Could not change release: '+error.message); }
+    else if(!data||!data.length){ alert('Release change was not saved — your login may not have permission for this room.'); }
+  }); }
+  render();
+}
+function resetCfg(){
+  if(confirm('Discard live changes and reload defaults from config.js?')){
+    localStorage.removeItem(LS_KEY);cfg=JSON.parse(JSON.stringify(window.WORKSHOP_CONFIG));initBookmarks();render();
+  }
+}
+function exportConfig(){
+  const body="/* Exported from the Standard Setting app — "+new Date().toLocaleString()+" */\n"+
+    "window.WORKSHOP_CONFIG = "+JSON.stringify(cfg,null,2)+";\n";
+  const blob=new Blob([body],{type:"text/javascript"});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download="config.js";a.click();
+}
+
+/* ---------- login / role gating ---------- */
+function pickRole(r){
+  selectedRole=r;
+  document.getElementById('roleP').classList.toggle('on',r==='panelist');
+  document.getElementById('roleF').classList.toggle('on',r==='facilitator');
+  document.getElementById('loginNote').innerHTML = r==='facilitator'
+    ? 'Facilitator sign-in unlocks Workshop Setup and the results-release controls. Panelists never see these screens.'
+    : 'Your facilitator set your password — it can&#699;t be changed during the workshop. Contact your table leader if you have trouble.';
+}
+function showLogin(){
+  userRole=null;
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  const SC=window.SUPABASE_CONFIG||{};
+  document.getElementById('loginLogo').textContent=cfg.clientInitials||'EM';
+  document.getElementById('loginTitle').textContent=SC.appTitle||'Standard Setting';
+  document.getElementById('loginSub').textContent=SC.appTagline||'Sign in to begin';
+  if(USE_SB){
+    // role comes from the database, not chosen here
+    document.getElementById('roleSeg').style.display='none';
+    document.getElementById('magicWrap').style.display='block';
+    document.getElementById('loginNote').innerHTML='Panelists: just enter your email and tap &ldquo;Email me a sign-in link.&rdquo; No password needed.';
+  } else {
+    document.getElementById('magicWrap').style.display='none';
+    pickRole(selectedRole);
+  }
+}
+async function emailMeALink(){
+  const note=document.getElementById('loginNote');
+  const email=(document.getElementById('liEmail').value||'').trim();
+  if(!email){ note.innerHTML='⚠ Enter your email above first.'; return; }
+  note.innerHTML='Sending your sign-in link…';
+  const {error}=await SB.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:window.location.href}});
+  if(error){ note.innerHTML='⚠ '+error.message; return; }
+  note.innerHTML='✓ Check your inbox ('+email+') for a sign-in link. It can take a minute — check spam too.';
+}
+async function doLogin(){
+  const note=document.getElementById('loginNote');
+  if(USE_SB){
+    const email=document.getElementById('liEmail').value.trim();
+    const password=document.getElementById('liPass').value;
+    if(!email||!password){ note.innerHTML='⚠ Enter your email and password.'; return; }
+    note.innerHTML='Signing in…';
+    const {error}=await SB.auth.signInWithPassword({email,password});
+    if(error){ note.innerHTML='⚠ '+error.message; return; }
+    try{ await loadFromSupabase(); }
+    catch(e){ note.innerHTML='⚠ '+(e.message||'Could not load your workshop.'); return; }
+    if(!userRole){ note.innerHTML='⚠ This login isn&#699;t registered for this workshop.'; await SB.auth.signOut(); return; }
+    enterApp();
+  } else {
+    userRole=selectedRole; enterApp();
+  }
+}
+function enterApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  const fac=isFacRole();
+  document.getElementById('modeToggle').style.display=fac?'flex':'none';
+  document.getElementById('mAdmin').style.display=isAdmin()?'':'none';        // only admins can preview Admin
+  document.getElementById('mGroupFac').style.display=fac?'':'none';
+  document.getElementById('mPanelist').style.display=fac?'':'none';
+  if(isAdmin()){setMode('admin');}
+  else if(isGroupFac()){setMode('groupfac');}
+  else{mode='panelist';view='home';render();}
+  startAutoRefresh();
+}
+async function refreshNow(){
+  if(!USE_SB) return;
+  const btn=document.getElementById('refreshBtn'); if(btn) btn.textContent='↻ …';
+  const v=view, m=mode;   // stay on the same screen
+  const refreshFormMeta=async()=>{
+    if(!currentFormId)return;
+    const {data:fm}=await SB.from('forms').select('current_round,rounds,results_released,status,grade,name').eq('id',currentFormId).maybeSingle();
+    if(fm){ const f=sbForms.find(x=>x.id===currentFormId); if(f)Object.assign(f,fm);
+      cfg.currentRound=fm.current_round||cfg.currentRound; cfg.rounds=fm.rounds||cfg.rounds;
+      cfg.resultsReleased=!!fm.results_released; cfg.formStatus=fm.status; }
+  };
+  try{
+    if(isFacRole()){
+      // reload the CURRENTLY-SELECTED room/form in place (do NOT snap back to the first form)
+      const keepF=currentFormId, keepG=currentGroupId;
+      if(keepG) await loadFormsSB(keepG);
+      if(keepF && sbForms.find(f=>f.id===keepF)) await loadFormContext(keepF);
+      else await refreshFormMeta();
+      if(isAdmin()){ try{ await loadOverviewSB(); }catch(e){} }
+      try{ await loadPanelProgressSB(); }catch(e){}
+      await loadMediansSB();
+    } else {
+      const prevRound=cfg.currentRound;
+      await refreshFormMeta();
+      if(cfg.currentRound!==prevRound){ try{ await loadProgressSB(); }catch(e){} }  // new round → carry forward
+      await loadMediansSB();
+    }
+    view=v; mode=m; render();
+  }catch(e){ console.error('refresh',e); }
+  finally{ const b=document.getElementById('refreshBtn'); if(b) b.textContent='↻ Refresh'; }
+}
+let _autoRefreshTimer=null, _lastSig='';
+function startAutoRefresh(){
+  if(!USE_SB || _autoRefreshTimer) return;
+  _autoRefreshTimer=setInterval(async ()=>{
+    if(document.hidden) return;
+    try{
+      if(userRole==='panelist'){
+        if(!currentFormId) return;
+        const {data:fm}=await SB.from('forms').select('current_round,results_released,status').eq('id',currentFormId).maybeSingle();
+        if(!fm) return;
+        const changed = (!!fm.results_released)!==!!cfg.resultsReleased
+                     || (fm.current_round||1)!==cfg.currentRound
+                     || (fm.status||'active')!==(cfg.formStatus||'active');
+        if(changed){ await refreshNow(); toast('Updated by your facilitator.'); }
+      } else if(isFacRole()){
+        // quietly live-update the dashboard being viewed; re-render ONLY when something changed
+        // (no form switch, no scroll jump when nothing's new)
+        if(view==='progress'){
+          await loadPanelProgressSB();
+          const sig='p|'+(sbPanelProgress||[]).map(r=>r.name+':'+r.items_complete+':'+r.cuts_placed+':'+(r.study_done?1:0)).join('|')+'|'+(sbSurvey||[]).length;
+          if(sig!==_lastSig){ _lastSig=sig; render(); }
+        } else if(view==='overview' && isAdmin()){
+          await loadOverviewSB();
+          const sig='o|'+(sbOverview||[]).map(r=>r.form_id+':'+r.n_finished_study+':'+r.n_bookmarked+':'+r.current_round+':'+(r.results_released?1:0)).join('|');
+          if(sig!==_lastSig){ _lastSig=sig; render(); }
+        }
+      }
+    }catch(e){}
+  }, 15000);
+}
+async function signOut(){
+  if(USE_SB){ try{await SB.auth.signOut();}catch(e){} }
+  selectedRole=userRole||'panelist'; myPanelistId=null; showLogin();
+}
+function pw(){
+  return `<h2 class="h">Change your password</h2>
+  <p class="lede">If you signed in with a temporary password from your facilitator, set your own here. ${escHtml(cfg.panelistName||'')}</p>
+  <div class="card" style="max-width:420px">
+    <div class="fld"><label>New password</label><input type="password" id="pw_new" placeholder="At least 8 characters"></div>
+    <div class="fld"><label>Confirm new password</label><input type="password" id="pw_conf" placeholder="Re-type it"></div>
+    <button class="cta" onclick="changePassword()">Update password</button>
+    <div class="note" id="pwNote" style="margin-top:10px"></div>
+  </div>`;
+}
+async function changePassword(){
+  const note=document.getElementById('pwNote');
+  const a=(document.getElementById('pw_new').value||''), b=(document.getElementById('pw_conf').value||'');
+  if(a.length<8){ note.innerHTML='⚠ Use at least 8 characters.'; return; }
+  if(a!==b){ note.innerHTML='⚠ The two passwords don&#699;t match.'; return; }
+  if(!USE_SB){ note.innerHTML='⚠ Requires the database connection.'; return; }
+  note.innerHTML='Updating…';
+  const {error}=await SB.auth.updateUser({password:a});
+  if(error){ note.innerHTML='⚠ '+error.message; return; }
+  note.innerHTML='✓ Password updated. Use it next time you sign in.';
+}
+
+/* ---------- Supabase data layer ---------- */
+async function loadFromSupabase(){
+  const u=(await SB.auth.getUser()).data.user; if(!u){userRole=null;return;}
+  const W=wid();
+  const {data:pan,error:pe}=await SB.from('panelists').select('*').eq('workshop_id',W).eq('auth_user_id',u.id).maybeSingle();
+  if(pe) throw new Error(pe.message);
+  if(!pan){ userRole=null; return; }
+  if(pan.role==='panelist' && pan.status==='disabled'){ await SB.auth.signOut(); throw new Error('Your access to this workshop has been closed.'); }
+  userRole=pan.role; myPanelistId=pan.id;
+  cfg.panelistName=((pan.first_name||'')+' '+(pan.last_name||'')).trim()||pan.email;
+  cfg.contentArea=pan.content_area||cfg.contentArea; cfg.grade=pan.grade||cfg.grade; cfg.tableNo=pan.table_no||cfg.tableNo;
+  const {data:ws}=await SB.from('workshops').select('*').eq('id',W).single();
+  if(ws){cfg.workshopTitle=ws.title;cfg.subtitle=ws.subtitle;cfg.rounds=ws.rounds;cfg.currentRound=ws.current_round;cfg.resultsReleased=ws.results_released;cfg.requireOIBComplete=ws.require_oib_complete;cfg.showImpact=ws.show_impact!==false;
+    if(ws.content_areas&&ws.content_areas.length)cfg.contentAreas=ws.content_areas;
+    if(ws.grades&&ws.grades.length)cfg.grades=ws.grades;
+    if(ws.greeting)cfg.greeting=ws.greeting;
+    if(ws.grade_label)cfg.gradeLabel=ws.grade_label;
+    if(ws.item_map_columns)cfg.itemMapColumns=ws.item_map_columns;}
+  const {data:lv}=await SB.from('achievement_levels').select('*').eq('workshop_id',W).order('ordinal');
+  if(lv&&lv.length) cfg.levels=lv.map(l=>({name:l.name,short:l.short_label,color:l.color,descriptor:l.descriptor}));
+  await loadGroupsSB();
+  // establish the group/room context: a panelist's own group, else the first group
+  let gid = pan.group_id || (sbGroups[0] && sbGroups[0].id) || null;
+  await loadGroupContext(gid);
+  await loadProgressSB();
+}
+function mapDbItems(its){
+  return (its||[]).map(it=>({pos:it.pos,page:it.page,scale:it.scale,strand:it.strand,scorePoint:it.score_point,itemType:it.item_type,pval:it.pval,brief:it.brief,id:it.id,external_id:it.external_id,answer_key:it.answer_key,
+    display: it.display_mode==='json' ? Object.assign({mode:'json'},(it.display_json||{}))
+           : it.display_mode==='image' ? {mode:'image',path:it.image_path,alt:'Item '+it.pos}
+           : {mode:'hidden'}}));
+}
+let sbForms=[];
+function gradeNum(s){const m=String(s||'').match(/\d+/g);return m?parseInt(m[m.length-1],10):0;}
+async function loadFormsSB(gid){
+  if(!gid){sbForms=[];return;}
+  const {data,error}=await SB.from('forms').select('*').eq('group_id',gid);
+  sbForms = error? [] : (data||[]);
+  sbForms.sort((a,b)=> gradeNum(a.grade)-gradeNum(b.grade) || (a.name||'').localeCompare(b.name||''));
+}
+async function loadGroupContext(gid){
+  currentGroupId=gid;
+  if(gid){
+    const {data:g}=await SB.from('groups').select('*').eq('id',gid).maybeSingle();
+    if(g){ cfg.groupName=g.name; cfg.groupContentArea=g.content_area; cfg.groupGrade=g.grade; }
+  }
+  await loadFormsSB(gid);
+  const first = (userRole==='panelist') ? (sbForms.find(f=>f.status!=='closed')||sbForms[0]) : sbForms[0];
+  await loadFormContext(first?first.id:null);
+}
+async function loadFormContext(fid){
+  currentFormId=fid; reviewIdx=0;   // always start the booklet at the first item
+  const fm=sbForms.find(f=>f.id===fid);
+  if(fm){ cfg.currentRound=fm.current_round||1; cfg.rounds=fm.rounds||cfg.rounds; cfg.resultsReleased=!!fm.results_released; cfg.formGrade=fm.grade; cfg.formName=fm.name; cfg.formStatus=fm.status; }
+  viewRound=cfg.currentRound;   // facilitator results viewer defaults to the live round
+  const itemCols = isFacRole()
+    ? 'id,pos,page,scale,strand,score_point,item_type,pval,brief,display_mode,display_json,image_path,external_id,answer_key'
+    : 'id,pos,page,scale,strand,score_point,item_type,pval,brief,display_mode,display_json,image_path';
+  let q=SB.from('items').select(itemCols);
+  q = fid ? q.eq('form_id',fid) : q.eq('group_id',currentGroupId);
+  const {data:its}=await q.order('pos');
+  oib=mapDbItems(its);
+  posToItemId={}; oib.forEach(it=>posToItemId[it.pos]=it.id);
+  initBookmarks();
+  await signImages();
+}
+async function switchForm(fid){
+  await loadFormContext(fid);
+  if(userRole==='panelist') await loadProgressSB();
+  await loadMediansSB();
+  render();
+  const f=sbForms.find(x=>x.id===fid);
+  if(f) toast('Form: '+(f.name||f.grade||''));
+}
+async function openForm(fid){ const f=sbForms.find(x=>x.id===fid); if(f&&f.status==='closed'){alert('This booklet is closed.');return;} await switchForm(fid); goView('review'); }
+async function setFormStatus(st){
+  if(!currentFormId)return;
+  const {error}=await SB.from('forms').update({status:st}).eq('id',currentFormId);
+  if(error){alert('Failed: '+error.message);return;}
+  const fm=sbForms.find(f=>f.id===currentFormId); if(fm)fm.status=st; cfg.formStatus=st;
+  render(); toast(st==='closed'?'Form closed to panelists.':'Form reopened.');
+}
+async function loadProgressSB(){
+  const idToPos={}; oib.forEach(it=>idToPos[it.id]=it.pos);
+  answers={};
+  const {data:resp}=await SB.from('oib_responses').select('item_id,measures,why_harder').eq('panelist_id',myPanelistId).eq('form_id',currentFormId);
+  (resp||[]).forEach(x=>{const p=idToPos[x.item_id]; if(p!=null)answers[p]={measures:x.measures||'',harder:x.why_harder||''};});
+  bookmarks={}; for(let c=1;c<=nCuts();c++)bookmarks[c]=null;
+  const {data:bm}=await SB.from('bookmarks').select('cut_number,item_pos').eq('panelist_id',myPanelistId).eq('form_id',currentFormId).eq('round',cfg.currentRound);
+  (bm||[]).forEach(x=>{bookmarks[x.cut_number]=x.item_pos;});
+  // carry forward: if this round has no bookmarks yet, show the previous round's as
+  // editable SUGGESTIONS (not saved → they don't count until the panelist confirms)
+  carriedForward=false;
+  const anyThisRound=Object.values(bookmarks).some(v=>v!=null);
+  if(!anyThisRound && cfg.currentRound>1 && !panelEditLocked()){
+    const {data:prev}=await SB.from('bookmarks').select('cut_number,item_pos').eq('panelist_id',myPanelistId).eq('form_id',currentFormId).eq('round',cfg.currentRound-1);
+    if(prev&&prev.length){ prev.forEach(x=>{bookmarks[x.cut_number]=x.item_pos;}); carriedForward=true; }
+  }
+  // load this panelist's cuts across ALL rounds (for the "earlier rounds" reference)
+  myRoundCuts={};
+  const {data:allbm}=await SB.from('bookmarks').select('round,cut_number,item_pos').eq('panelist_id',myPanelistId).eq('form_id',currentFormId);
+  (allbm||[]).forEach(x=>{(myRoundCuts[x.round]=myRoundCuts[x.round]||{})[x.cut_number]=x.item_pos;});
+  surveyState={q1:null};
+  const {data:sv}=await SB.from('survey_responses').select('question_key,answer').eq('panelist_id',myPanelistId).eq('form_id',currentFormId).eq('round',cfg.currentRound);
+  (sv||[]).forEach(x=>{if(x.question_key==='readiness'&&x.answer!=null&&x.answer!=='')surveyState.q1=parseInt(x.answer);});
+}
+async function saveAnsSB(pos){
+  const it=itemAt(pos); if(!it||!it.id)return; const a=answers[pos]||{};
+  const {error}=await SB.from('oib_responses').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,item_id:it.id,measures:a.measures||'',why_harder:a.harder||'',updated_at:new Date().toISOString()},{onConflict:'panelist_id,item_id'});
+  if(error)console.error('save note failed',error);
+}
+async function saveBmSB(c){
+  const it=itemAt(bookmarks[c]);
+  const {error}=await SB.from('bookmarks').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,round:cfg.currentRound,cut_number:c,item_pos:bookmarks[c],scale_score:it?it.scale:null},{onConflict:'panelist_id,form_id,round,cut_number'});
+  if(error)console.error('save bookmark failed',error);
+}
+async function saveSurveySB(){
+  const {error}=await SB.from('survey_responses').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,round:cfg.currentRound,question_key:'readiness',answer:String(surveyState.q1)},{onConflict:'panelist_id,form_id,round,question_key'});
+  if(error)console.error('save survey failed',error);
+}
+let sbImpact=[];
+async function loadMediansSB(){
+  sbMedians={}; sbDist={}; sbImpact=[]; sbTableMed={};
+  if(!currentFormId)return;
+  const R=(isFacRole()&&viewRound)?viewRound:cfg.currentRound;
+  const {data,error}=await SB.rpc('cut_medians',{frm:currentFormId,rnd:R});
+  if(error){console.error('medians',error);} else {(data||[]).forEach(r=>{sbMedians[r.cut_number]=r;});}
+  if(isFacRole()){
+    const {data:tm,error:te}=await SB.rpc('cut_medians_by_table',{frm:currentFormId,rnd:R});
+    if(te){console.error('table medians',te);} else {(tm||[]).forEach(r=>{(sbTableMed[r.table_no]=sbTableMed[r.table_no]||{})[r.cut_number]=r;});}
+  }
+  const {data:dd,error:de}=await SB.rpc('cut_distribution',{frm:currentFormId,rnd:R});
+  if(de){console.error('distribution',de);} else {(dd||[]).forEach(r=>{(sbDist[r.cut_number]=sbDist[r.cut_number]||{})[r.item_pos]=r.freq;});}
+  const {data:imp}=await SB.from('impact_scores').select('scale_score,n_students,percent').eq('form_id',currentFormId);
+  sbImpact = imp||[];
+}
+/* compute % per level from the loaded score distribution + this round's median cuts */
+function realImpact(){
+  if(!sbImpact||!sbImpact.length) return null;
+  const cuts=[]; for(let c=1;c<=nCuts();c++){ const m=sbMedians&&sbMedians[c]; cuts.push(m&&m.median_scale!=null?Number(m.median_scale):null); }
+  if(cuts.some(x=>x==null)) return null;
+  const total=sbImpact.reduce((a,x)=>a+(Number(x.n_students)||0),0);
+  if(!total) return null;
+  const pct=[];
+  for(let i=0;i<cfg.levels.length;i++){
+    const lo=(i===0)?-Infinity:cuts[i-1];
+    const hi=(i===cfg.levels.length-1)?Infinity:cuts[i];
+    const cnt=sbImpact.reduce((a,x)=>{const s=Number(x.scale_score); return a+((s>=lo&&s<hi)?(Number(x.n_students)||0):0);},0);
+    pct.push(Math.round(cnt/total*100));
+  }
+  return pct;
+}
+let sbGroups=[];
+async function loadGroupsSB(){
+  const {data,error}=await SB.from('groups').select('*').eq('workshop_id',wid()).order('content_area').order('grade');
+  sbGroups = error? [] : (data||[]);
+}
+function groupIdFor(ca,grade){
+  const g=sbGroups.find(x=>(x.content_area||'').toLowerCase()===(ca||'').toLowerCase() && (x.grade||'').toLowerCase()===(grade||'').toLowerCase());
+  return g?g.id:null;
+}
+async function switchGroup(gid){
+  await loadGroupContext(gid);
+  await loadMediansSB();
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+  const g=sbGroups.find(x=>x.id===gid);
+  if(g) toast('Now managing: '+(g.name||((g.content_area||'')+' · '+(g.grade||''))));
+}
+let _toastT=null;
+function toast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--dark-green);color:#fff;padding:11px 20px;border-radius:8px;font-size:14px;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.3)';document.body.appendChild(t);}
+  t.textContent=msg; t.style.display='block';
+  clearTimeout(_toastT); _toastT=setTimeout(()=>{t.style.display='none';},2600);
+}
+async function createGroupsFromLists(){
+  const cas=cfg.contentAreas||[], grs=cfg.grades||[];
+  if(!cas.length||!grs.length){alert('Add content areas and grades in Workshop Setup first.');return;}
+  await loadGroupsSB();
+  const rows=[];
+  cas.forEach(ca=>grs.forEach(gr=>{ if(!groupIdFor(ca,gr)) rows.push({workshop_id:wid(),content_area:ca,grade:gr,name:ca+' · '+gr,rounds:cfg.rounds,current_round:1,results_released:false,status:'active'}); }));
+  if(!rows.length){alert('All groups already exist.');return;}
+  const {error}=await SB.from('groups').insert(rows);
+  if(error){alert('Create failed: '+error.message);return;}
+  await loadGroupsSB(); render();
+  alert('Created '+rows.length+' group(s).');
+}
+async function setRoundSB(n){
+  if(n<1)n=1;
+  cfg.currentRound=n; cfg.rounds=Math.max(cfg.rounds||1,n); cfg.resultsReleased=false; viewRound=n;
+  const {data,error}=await SB.from('forms').update({current_round:n, rounds:cfg.rounds, results_released:false}).eq('id',currentFormId).select();
+  if(error){ alert('Could not change the round: '+error.message); return; }
+  if(!data||!data.length){ alert('The round change was not saved — your login may not have permission to edit this room. Ask an admin to advance it.'); return; }
+  const fm=sbForms.find(f=>f.id===currentFormId); if(fm){fm.current_round=n;fm.rounds=cfg.rounds;fm.results_released=false;}
+  if(userRole==='panelist') await loadProgressSB();
+  await loadMediansSB();
+  render();
+}
+function advanceRoundSB(){
+  const r=cfg.currentRound;
+  if(!cfg.resultsReleased){
+    if(!confirm('Round '+r+' results have not been released to panelists yet.\n\nBest practice is to share results with the panel before starting the next round. Advance to round '+(r+1)+' anyway?')) return;
+  }
+  setRoundSB(r+1);
+}
+function viewRoundSet(n){ viewRound=n; loadMediansSB().then(render); }
+async function deleteFormSB(fid){
+  if(!isAdmin()){alert('Admins only.');return;}
+  const r=sbOverview.find(x=>x.form_id===fid); if(!r){alert('Form not found.');return;}
+  const room=((r.content_area||'')+' · '+(r.grade||'')).trim();
+  const expect=(r.name||r.form_grade||room).trim();
+  const nb=r.n_bookmarked||0, np=r.n_panelists||0;
+  const ans=prompt(
+    'Permanently delete this form?\n\n'+room+(r.form_grade?'  ('+r.form_grade+')':'')+
+    '\n\nThis removes its item map, all bookmarks, survey responses, item-map notes, and impact data. This cannot be undone.'+
+    (nb?('\n\n⚠ '+nb+' of '+np+' panelist(s) have bookmarks on this form.'):'')+
+    '\n\nType the form name exactly to confirm:\n'+expect);
+  if(ans===null) return;
+  if(ans.trim()!==expect){ alert('Name did not match “'+expect+'”. Nothing was deleted.'); return; }
+  const {error}=await SB.rpc('delete_form',{frm:fid});
+  if(error){ alert('Delete failed: '+error.message+'\n\nIf this says the function does not exist, run migrate_form_delete.sql in Supabase.'); return; }
+  if(currentFormId===fid){ currentFormId=null; viewRound=null; }
+  await loadOverviewSB();
+  if(currentGroupId) await loadFormsSB(currentGroupId);
+  render(); toast('Form deleted.');
+}
+async function advanceAllRoundsSB(){
+  if(!confirm('Advance EVERY form to its next round? (Group results will be turned off for the new round.)'))return;
+  for(const r of sbOverview){ const nr=(r.current_round||1)+1; await SB.from('forms').update({current_round:nr, rounds:Math.max(r.current_round||1,nr), results_released:false}).eq('id',r.form_id); }
+  await loadOverviewSB(); render();
+  toast('Advanced all forms to their next round (results held).');
+}
+async function loadResponsesSB(){
+  const {data,error}=await SB.from('oib_responses').select('item_id,measures,why_harder,panelists(first_name,last_name)').eq('form_id',currentFormId);
+  if(error){console.error('rollup',error);}
+  const idToPos={}; oib.forEach(it=>idToPos[it.id]=it.pos);
+  const map={};
+  (data||[]).forEach(x=>{const p=idToPos[x.item_id]; if(p==null)return; const who=x.panelists?((x.panelists.first_name||'')+' '+(x.panelists.last_name||'')).trim():'Panelist'; (map[p]=map[p]||[]).push({who,measures:x.measures,harder:x.why_harder});});
+  sbRollup=map;
+  const {count}=await SB.from('panelists').select('*',{count:'exact',head:true}).eq('group_id',currentGroupId).eq('role','panelist');
+  sbPanelistCount=count;
+}
+
+/* ---------- facilitator setup writes ---------- */
+async function saveWorkshopSB(){
+  const W=wid();
+  const {error}=await SB.from('workshops').update({title:cfg.workshopTitle,subtitle:cfg.subtitle,content_area:cfg.contentArea,grade:cfg.grade,rounds:cfg.rounds,current_round:cfg.currentRound,require_oib_complete:cfg.requireOIBComplete!==false,show_impact:cfg.showImpact!==false,content_areas:cfg.contentAreas||[],grades:cfg.grades||[],greeting:cfg.greeting||'Hello',grade_label:cfg.gradeLabel||'Grade',item_map_columns:cfg.itemMapColumns||IMCOL_DEFAULT}).eq('id',W);
+  if(error){alert('Save failed: '+error.message);return;}
+  await SB.from('achievement_levels').delete().eq('workshop_id',W);
+  const rows=cfg.levels.map((l,i)=>({workshop_id:W,ordinal:i+1,name:l.name,short_label:l.short,color:l.color,descriptor:l.descriptor}));
+  const {error:le}=await SB.from('achievement_levels').insert(rows);
+  if(le){alert('Levels save failed: '+le.message);return;}
+  alert('Workshop details and levels saved to the database.');
+}
+async function saveItemsSB(){
+  const W=wid();
+  const rows=items().map(it=>({workshop_id:W,group_id:currentGroupId,form_id:currentFormId,pos:it.pos,page:it.page,scale:it.scale,strand:it.strand,score_point:it.scorePoint,item_type:it.itemType,pval:it.pval,brief:it.brief,
+    external_id: it.external_id||null, answer_key: it.answer_key||null,
+    display_mode:it.display?it.display.mode:'hidden',
+    display_json: (it.display&&it.display.mode==='json')? Object.assign({stem:it.display.stem||''}, it.display.options?{options:it.display.options}:{}) : null,
+    image_path: (it.display&&it.display.mode==='image')? (it.display.path||it.display.src) : null}));
+  const {error}=await SB.from('items').upsert(rows,{onConflict:'form_id,pos'});
+  if(error){alert('Items save failed: '+error.message);return false;}
+  return true;
+}
+async function saveItemsSBButton(){ if(await saveItemsSB()) alert('Saved '+itemCount()+' items to the database.'); }
+async function archiveWorkshop(){
+  const W=wid();
+  const [ws,lv,pan,its,resp,bm,sv]=await Promise.all([
+    SB.from('workshops').select('*').eq('id',W).single(),
+    SB.from('achievement_levels').select('*').eq('workshop_id',W).order('ordinal'),
+    SB.from('panelists').select('*').eq('workshop_id',W),
+    SB.from('items').select('*').eq('workshop_id',W).order('pos'),
+    SB.from('oib_responses').select('*').eq('workshop_id',W),
+    SB.from('bookmarks').select('*').eq('workshop_id',W),
+    SB.from('survey_responses').select('*').eq('workshop_id',W)
+  ]);
+  const archive={exported_at:new Date().toISOString(),workshop:ws.data,achievement_levels:lv.data,panelists:pan.data,items:its.data,oib_responses:resp.data,bookmarks:bm.data,survey_responses:sv.data};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(archive,null,2)],{type:'application/json'}));
+  a.download='workshop-archive-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+async function setPanelistsStatus(st){
+  const {error}=await SB.from('panelists').update({status:st}).eq('workshop_id',wid()).eq('role','panelist');
+  if(error){alert('Failed: '+error.message);return;}
+  await loadPanelistsSB();render();
+  alert('Panelist logins '+(st==='disabled'?'disabled':'re-enabled')+'.');
+}
+async function clearWorkshopData(){
+  if(!confirm('This deletes ALL panelist responses, bookmarks, and survey answers for this workshop.\n\nMake sure you have downloaded the archive first. Continue?'))return;
+  if(!confirm('Final check: this cannot be undone. Clear the data now?'))return;
+  const W=wid(); let total=0;
+  for(const t of ['oib_responses','bookmarks','survey_responses']){
+    const {data,error}=await SB.from(t).delete().eq('workshop_id',W).select('id');
+    if(error){alert('Clear failed on '+t+': '+error.message);return;}
+    total += data? data.length : 0;
+  }
+  answers={};bookmarks={};surveyState={q1:null};sbMedians={};sbDist={};
+  render();
+  if(total===0){ alert('Cleared 0 records. This button only removes responses, bookmarks, and surveys — there were none. To wipe groups, forms, items, and the roster (full start-over), run reset_workshop.sql in Supabase.'); }
+  else { alert('Cleared '+total+' record(s) (responses, bookmarks, surveys) across the workshop.'); }
+}
+async function clearRosterSB(){
+  if(!confirm('Remove ALL panelists and group facilitators from this workshop? (Admin accounts are kept.) Their responses/bookmarks go too. Continue?'))return;
+  const {data,error}=await SB.from('panelists').delete().eq('workshop_id',wid()).in('role',['panelist','group_facilitator']).select('id');
+  if(error){alert('Failed: '+error.message);return;}
+  await loadPanelistsSB(); render();
+  alert((data?data.length:0)+' panelist/facilitator record(s) removed (admins kept).');
+}
+async function resetWholeWorkshop(){
+  if(!isAdmin()){ alert('Admins only.'); return; }
+  const ans=prompt('This wipes the ENTIRE workshop — rooms, forms, item maps, panelists, bookmarks, surveys, impact data, achievement levels, and the content-area/grade lists. Admin logins are kept. This CANNOT be undone.\n\nDownload the archive (JSON) first if you might need this data.\n\nType  NEW WORKSHOP  to confirm:');
+  if(ans===null) return;
+  if(ans.trim().toUpperCase()!=='NEW WORKSHOP'){ alert('That didn’t match. Nothing was cleared.'); return; }
+  const {error}=await SB.rpc('reset_workshop',{wf:wid()});
+  if(error){ alert('Reset failed: '+error.message+'\n\nIf it says the function does not exist, run reset_workshop_fn.sql (or combined_setup.sql) in Supabase first.'); return; }
+  currentGroupId=null; currentFormId=null; sbForms=[]; sbGroups=[]; viewRound=null;
+  try{ await loadFromSupabase(); }catch(e){}
+  view='setup'; render();
+  alert('Workshop cleared. Start building the new one in Workshop Setup → then create rooms and forms.');
+}
+async function loadPanelistsSB(){
+  const {data,error}=await SB.from('panelists').select('*').eq('workshop_id',wid()).order('last_name');
+  sbPanelists = error? [] : (data||[]);
+}
+function submitPanelist(){
+  const g=id=>(document.getElementById(id).value||'').trim();
+  const email=g('np_email'); if(!email){alert('Email is required.');return;}
+  const p={first:g('np_first'),last:g('np_last'),email,email2:g('np_email2'),ca:g('np_ca'),grade:g('np_grade'),table:g('np_table'),role:document.getElementById('np_role').value};
+  if(editingId) updatePanelistSB(editingId,p); else addPanelistSB(p);
+}
+function panelRow(p){return {first_name:p.first,last_name:p.last,email:p.email,email2:p.email2||null,content_area:p.ca,grade:p.grade,table_no:p.table,role:p.role||'panelist',group_id:groupIdFor(p.ca,p.grade)};}
+function warnNoRoom(p){
+  if(!groupIdFor(p.ca,p.grade)) alert('Note: no room matches “'+(p.ca||'?')+' · '+(p.grade||'?')+'”.\nThe person is saved, but won’t appear in dashboards or results until their content area + grade match an existing room (create the room, or edit them to match — then they auto-link).');
+}
+async function addPanelistSB(p){
+  const {error}=await SB.from('panelists').insert(Object.assign({workshop_id:wid(),status:'active'},panelRow(p)));
+  if(error){alert('Add failed: '+error.message);return;}
+  await loadPanelistsSB();render(); warnNoRoom(p);
+}
+async function updatePanelistSB(id,p){
+  const {error}=await SB.from('panelists').update(panelRow(p)).eq('id',id);
+  if(error){alert('Save failed: '+error.message);return;}
+  editingId=null; await loadPanelistsSB();render(); warnNoRoom(p);
+}
+async function fixRoomAssignments(){
+  let n=0;
+  for(const p of sbPanelists){
+    const gid=groupIdFor(p.content_area,p.grade);
+    if(gid && p.group_id!==gid){ const {error}=await SB.from('panelists').update({group_id:gid}).eq('id',p.id); if(!error)n++; }
+  }
+  await loadPanelistsSB();render();
+  alert('Linked '+n+' person(s) to their room by content area + grade. (Any with no matching room are unchanged.)');
+}
+async function removePanelistSB(id){
+  if(!confirm('Remove this panelist?'))return;
+  const {error}=await SB.from('panelists').delete().eq('id',id);
+  if(error){alert('Remove failed: '+error.message);return;}
+  await loadPanelistsSB();render();
+}
+async function invitePanelist(email){
+  if(!email)return;
+  const {error}=await SB.auth.signInWithOtp({email,options:{shouldCreateUser:true,emailRedirectTo:window.location.href}});
+  if(error){alert('Invite failed: '+error.message);return;}
+  alert('Login link sent to '+email+'.');
+}
+async function inviteAllPanelists(){
+  const targets=sbPanelists.filter(p=>p.role==='panelist' && p.email);
+  if(!targets.length){ alert('No panelists with an email address to invite.'); return; }
+  if(!confirm('Email a sign-in link to all '+targets.length+' panelist(s)?\n\nNote: if custom SMTP (Brevo) isn’t set up, the built-in email is rate-limited — only a few will go out per hour.')) return;
+  let ok=0, fail=0; const errs=[];
+  for(const p of targets){
+    const {error}=await SB.auth.signInWithOtp({email:p.email,options:{shouldCreateUser:true,emailRedirectTo:window.location.href}});
+    if(error){ fail++; if(errs.length<4) errs.push(p.email+': '+error.message); } else { ok++; }
+    await new Promise(r=>setTimeout(r,400));   // gentle pacing
+  }
+  alert('Sign-in links sent: '+ok+' ok'+(fail?(', '+fail+' failed'):'')+'.'
+    +(fail?('\n\nFirst failures:\n'+errs.join('\n')+'\n\nFailures are usually email rate limits — set up custom SMTP (Brevo) to reach the whole panel reliably.'):''));
+}
+function downloadPanelistTemplate(){
+  const csv="first_name,last_name,email,email2,content_area,grade,table_no,role\nJane,Smith,jane.smith@example.school.nz,,Reading,Years 3-4,1,panelist\n";
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="panelist_template.csv";a.click();
+}
+function parseCSV(text){
+  const rows=[];let i=0,field='',row=[],inq=false;
+  while(i<text.length){const c=text[i];
+    if(inq){ if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else inq=false; } else field+=c; }
+    else { if(c==='"')inq=true; else if(c===','){row.push(field);field='';} else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n')i++; row.push(field);field='';rows.push(row);row=[]; } else field+=c; }
+    i++;
+  }
+  if(field!==''||row.length){row.push(field);rows.push(row);}
+  return rows.filter(r=>r.some(x=>(x||'').trim()!==''));
+}
+async function onImportPanelistsCSV(input){
+  const f=input.files[0]; if(!f)return;
+  let text; try{ text=await f.text(); }catch(e){ alert('Could not read file.'); return; }
+  const rows=parseCSV(text);
+  if(rows.length<2){ alert('That file has no data rows. Use the template.'); return; }
+  const hdr=rows[0].map(h=>(h||'').trim().toLowerCase());
+  const ci={first:hdr.indexOf('first_name'),last:hdr.indexOf('last_name'),email:hdr.indexOf('email'),email2:hdr.indexOf('email2'),ca:hdr.indexOf('content_area'),grade:hdr.indexOf('grade'),table:hdr.indexOf('table_no'),role:hdr.indexOf('role')};
+  if(ci.email<0){ alert("CSV needs an 'email' column header. Download the template to see the format."); return; }
+  const existing=new Set(sbPanelists.map(p=>(p.email||'').toLowerCase()));
+  const toAdd=[]; let skipped=0;
+  for(let r=1;r<rows.length;r++){
+    const get=k=>ci[k]>=0?((rows[r][ci[k]]||'').trim()):'';
+    const email=get('email'); if(!email){skipped++;continue;}
+    if(existing.has(email.toLowerCase())){skipped++;continue;}
+    existing.add(email.toLowerCase());
+    const rlv=get('role').toLowerCase();
+    const rl=(rlv==='group_facilitator')?'group_facilitator':((rlv==='facilitator'||rlv==='admin')?'facilitator':'panelist');
+    toAdd.push({workshop_id:wid(),first_name:get('first'),last_name:get('last'),email,email2:get('email2')||null,content_area:get('ca'),grade:get('grade'),table_no:get('table'),role:rl,status:'active',group_id:groupIdFor(get('ca'),get('grade'))});
+  }
+  if(!toAdd.length){ alert('No new panelists to add — all already in the roster or missing an email ('+skipped+' skipped).'); return; }
+  const {error}=await SB.from('panelists').insert(toAdd);
+  if(error){ alert('Import failed: '+error.message); return; }
+  await loadPanelistsSB(); render();
+  alert('Added '+toAdd.length+' panelists'+(skipped?(' ('+skipped+' skipped as duplicates / no email)'):'')+'. No invites were sent.');
+}
+
+/* ---------- boot ---------- */
+initBookmarks();
+if(USE_SB){
+  let entered=false;
+  const enterIfSession = async (session)=>{
+    if(entered || !session) return;
+    entered=true;
+    try{
+      await loadFromSupabase();
+      if(userRole){ enterApp(); }
+      else { entered=false; showLogin(); }   // logged in but not on this workshop's roster
+    }catch(e){ console.error(e); entered=false; showLogin(); }
+  };
+  // a magic-link / invite session can arrive a beat AFTER load — catch it here
+  SB.auth.onAuthStateChange((_evt, session)=>{ if(session) enterIfSession(session); });
+  (async ()=>{
+    // PKCE-style links land with ?code=… that must be exchanged for a session
+    try{
+      const u=new URL(window.location.href);
+      if(u.searchParams.get('code')){
+        await SB.auth.exchangeCodeForSession(window.location.href);
+        window.history.replaceState({}, document.title, u.pathname);  // tidy the URL
+      }
+    }catch(e){ console.error('link exchange', e); }
+    const {data}=await SB.auth.getSession();
+    if(data&&data.session){ await enterIfSession(data.session); }
+    if(!entered){ showLogin(); }   // if a link is still resolving, onAuthStateChange will enter shortly
+  })();
+} else if(window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.url){
+  // DB was expected but the Supabase library didn't load (blocked CDN / offline)
+  document.getElementById('loginScreen').style.display='flex';
+  const note=document.getElementById('loginNote');
+  if(note) note.innerHTML='⚠ Couldn&#699;t load the database. Check your internet connection (and any ad-blocker or school network filter), then <a href="#" onclick="location.reload();return false;"><b>reload this page</b></a>.';
+} else {
+  loadProgress();
+  showLogin();
+}
+</script>
+</body>
+</html>
