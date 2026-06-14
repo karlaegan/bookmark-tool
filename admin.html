@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bookmark Tool — Workshop Admin</title>
+<style>
+  :root{ --green:#1f5c3d; --green-dark:#143d28; --bg:#f4f6f4; --line:#d7e0d9; --err:#b3261e; }
+  *{ box-sizing:border-box; }
+  body{ font-family:Verdana,Geneva,sans-serif; margin:0; background:var(--bg); color:#1c2620; }
+  header{ background:var(--green-dark); color:#fff; padding:18px 24px; }
+  header h1{ font-family:"Arial Black",Arial,sans-serif; font-size:18px; margin:0; letter-spacing:.3px; }
+  header p{ margin:4px 0 0; font-size:12px; opacity:.85; }
+  main{ max-width:720px; margin:24px auto; padding:0 16px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:20px 22px; margin-bottom:18px; }
+  .card h2{ font-family:"Arial Black",Arial,sans-serif; color:var(--green-dark); font-size:15px; margin:0 0 12px; }
+  label{ display:block; font-size:12px; font-weight:bold; margin:12px 0 4px; }
+  input,textarea{ width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:6px; font-family:inherit; font-size:13px; }
+  textarea{ min-height:120px; resize:vertical; }
+  button{ background:var(--green); color:#fff; border:0; border-radius:6px; padding:11px 18px; font-size:13px; font-weight:bold; cursor:pointer; margin-top:14px; }
+  button:hover{ background:var(--green-dark); }
+  button:disabled{ opacity:.5; cursor:default; }
+  .muted{ color:#5a6b60; font-size:12px; }
+  .out{ margin-top:14px; padding:12px 14px; border-radius:6px; font-size:13px; white-space:pre-wrap; display:none; }
+  .out.show{ display:block; }
+  .out.good{ background:#eaf4ee; border:1px solid #bcd9c6; }
+  .out.bad{ background:#fbe9e7; border:1px solid #f0c2bd; color:var(--err); }
+  .hidden{ display:none; }
+  a.dl{ display:inline-block; margin-top:10px; color:var(--green); font-weight:bold; font-size:13px; }
+  .who{ font-size:12px; color:#5a6b60; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Bookmark Tool — Workshop Admin</h1>
+  <p>Create panelist logins and reset facilitator passwords. No terminal required.</p>
+</header>
+<main>
+
+  <!-- ===== CONFIG: both values are safe to be public ===== -->
+  <script>
+    const SUPABASE_URL = "https://foashhoadldxaepgsxig.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_3CHA9ElFaBc5q4ihuBLXFw_PE8u3mli"; // <-- verify this is complete
+  </script>
+
+  <!-- ===== LOGIN ===== -->
+  <div class="card" id="loginCard">
+    <h2>Sign in</h2>
+    <p class="muted">Use your EdMetric admin email and password.</p>
+    <label>Email</label>
+    <input id="email" type="email" autocomplete="username" />
+    <label>Password</label>
+    <input id="password" type="password" autocomplete="current-password" />
+    <button id="loginBtn">Sign in</button>
+    <div class="out bad" id="loginOut"></div>
+  </div>
+
+  <!-- ===== TOOLS (shown after login) ===== -->
+  <div id="tools" class="hidden">
+    <p class="who">Signed in as <span id="whoami"></span> · <a href="#" id="signout">sign out</a></p>
+
+    <div class="card">
+      <h2>Create panelist logins</h2>
+      <p class="muted">Creates a login (shared password) for everyone on the roster who doesn't have one yet. Safe to run again — existing logins are skipped.</p>
+      <label>Workshop ID</label>
+      <input id="cl_wid" value="00000000-0000-4000-8000-000000000001" />
+      <label>Shared password</label>
+      <input id="cl_pw" value="EdMetric26!" />
+      <button id="cl_btn">Create logins</button>
+      <div class="out" id="cl_out"></div>
+      <a class="dl hidden" id="cl_dl">⬇ Download login list (CSV)</a>
+    </div>
+
+    <div class="card">
+      <h2>Reset facilitator passwords</h2>
+      <p class="muted">Sets a known password for the people listed below (one email per line). Their accounts and links are unchanged.</p>
+      <label>Emails (one per line)</label>
+      <textarea id="rp_emails">karla.egan@edmetric.com
+callie.wodrich@edmetric.com
+amy.jones@edmetric.com
+kolton.king@edmetric.com
+joseph.martineau@edmetric.com
+ellen.fitzsimmons@edmetric.com
+rob.keller@edmetric.com</textarea>
+      <label>New password</label>
+      <input id="rp_pw" value="EdMetric2026!" />
+      <button id="rp_btn">Reset passwords</button>
+      <div class="out" id="rp_out"></div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $ = (id) => document.getElementById(id);
+  const show = (el, ok, msg) => { el.className = "out show " + (ok ? "good" : "bad"); el.textContent = msg; };
+
+  // invoke a function and always surface the function's own error message
+  async function callFn(name, body) {
+    const { data, error } = await sb.functions.invoke(name, { body });
+    if (error) {
+      let detail = error.message;
+      try { if (error.context && error.context.json) { const j = await error.context.json(); if (j && j.error) detail = j.error; } } catch (_) {}
+      return { error: detail };
+    }
+    if (data && data.error) return { error: data.error };
+    return { data };
+  }
+
+  async function refreshUI() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      $("loginCard").classList.add("hidden");
+      $("tools").classList.remove("hidden");
+      $("whoami").textContent = session.user.email;
+    } else {
+      $("loginCard").classList.remove("hidden");
+      $("tools").classList.add("hidden");
+    }
+  }
+
+  $("loginBtn").onclick = async () => {
+    $("loginBtn").disabled = true;
+    const { error } = await sb.auth.signInWithPassword({
+      email: $("email").value.trim(), password: $("password").value,
+    });
+    $("loginBtn").disabled = false;
+    if (error) { show($("loginOut"), false, error.message); return; }
+    $("loginOut").className = "out";
+    refreshUI();
+  };
+
+  $("signout").onclick = async (e) => { e.preventDefault(); await sb.auth.signOut(); refreshUI(); };
+
+  // ---- create logins ----
+  $("cl_btn").onclick = async () => {
+    const btn = $("cl_btn"); btn.disabled = true;
+    show($("cl_out"), true, "Working…");
+    $("cl_dl").classList.add("hidden");
+    const { data, error } = await callFn("admin-create-logins", {
+      workshop_id: $("cl_wid").value.trim(), password: $("cl_pw").value,
+    });
+    btn.disabled = false;
+    if (error) { show($("cl_out"), false, error); return; }
+    let msg = `Found ${data.found} on roster.\nCreated ${data.created}, skipped (already had a login) ${data.skipped}, failed ${data.failed}.`;
+    if (data.failures && data.failures.length) msg += "\n\nFailures:\n" + data.failures.join("\n");
+    show($("cl_out"), data.failed === 0, msg);
+    if (data.csv && data.csv.length) {
+      const csvText = data.csv.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const url = URL.createObjectURL(new Blob([csvText], { type: "text/csv" }));
+      const dl = $("cl_dl"); dl.href = url; dl.download = "panelist_logins.csv"; dl.classList.remove("hidden");
+    }
+  };
+
+  // ---- reset passwords ----
+  $("rp_btn").onclick = async () => {
+    const btn = $("rp_btn"); btn.disabled = true;
+    show($("rp_out"), true, "Working…");
+    const emails = $("rp_emails").value.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    const { data, error } = await callFn("admin-reset-passwords", {
+      emails, password: $("rp_pw").value,
+    });
+    btn.disabled = false;
+    if (error) { show($("rp_out"), false, error); return; }
+    let msg = `Set ${data.set} password(s). New password: ${data.password}`;
+    if (data.missing && data.missing.length) msg += "\n\nNo login found for (create these first):\n" + data.missing.join("\n");
+    if (data.failed && data.failed.length) msg += "\n\nFailed:\n" + data.failed.join("\n");
+    show($("rp_out"), (!data.missing || !data.missing.length) && (!data.failed || !data.failed.length), msg);
+  };
+
+  refreshUI();
+</script>
+</body>
+</html>
