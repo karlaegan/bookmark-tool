@@ -1,3 +1,4 @@
+/* © 2026 EdMetric LLC. All rights reserved. Proprietary and confidential. */
 /* =====================================================================
    ORDERED ITEM BOOKLET (OIB)  —  item data for the workshop
    ---------------------------------------------------------------------

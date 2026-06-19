@@ -1,3 +1,4 @@
+/* © 2026 EdMetric LLC. All rights reserved. Proprietary and confidential. */
 /* =====================================================================
    Supabase connection for the Bookmark Standard-Setting Tool
    ---------------------------------------------------------------------

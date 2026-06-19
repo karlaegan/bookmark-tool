@@ -1,3 +1,4 @@
+/* Bookmark Standard Setting Tool — © 2026 EdMetric LLC. All rights reserved. Proprietary and confidential. */
 /* Exported from the Standard Setting app — 6/6/2026, 4:18:50 PM */
 window.WORKSHOP_CONFIG = {
   "workshopTitle": "SMART Standard Setting",

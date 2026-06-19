@@ -1,4 +1,9 @@
 <!doctype html>
+<!--
+  Bookmark Standard Setting Tool
+  © 2026 EdMetric LLC. All rights reserved.
+  Proprietary and confidential. Not for redistribution or reuse without written permission.
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -165,6 +170,7 @@
     </div>
     <div class="note" id="loginNote"></div>
   </div>
+  <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">© 2026 EdMetric LLC. All rights reserved.</div>
 </div>
 
 <div id="appShell" style="display:none">
@@ -291,7 +297,7 @@ function paintHeader(){
 /* ---------- nav ---------- */
 const PANELIST_NAV=[
   {k:"home",ic:"⌂",t:"Home"},
-  {k:"ald",ic:"☰",t:"Achievement Levels"},
+  {k:"ald",ic:"☰",t:"Progress Descriptors"},
   {k:"review",ic:"▦",t:"Review Items (OIB)"},
   {k:"itemmap",ic:"☷",t:"Item Map"},
   {k:"survey",ic:"✎",t:"Round Survey"},
@@ -475,8 +481,8 @@ function home(){
 }
 
 function ald(){
-  return `<h2 class="h">Achievement Levels</h2>
-  <p class="lede">These ${cfg.levels.length} levels define what students at each level know and can do. They&#699;re always one click away while you place bookmarks.</p>
+  return `<h2 class="h">Progress Descriptors</h2>
+  <p class="lede">These ${cfg.levels.length} progress descriptors define what students at each level know and can do. They&#699;re always one click away while you place bookmarks.</p>
   ${cfg.levels.map(l=>`<div class="lvl" style="background:${l.color}">
      <h4>${l.name}<span class="pill">${l.short}</span></h4><p>${l.descriptor}</p></div>`).join('')}`;
 }
