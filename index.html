@@ -2001,6 +2001,12 @@ async function saveItemsSB(){
     display_mode:it.display?it.display.mode:'hidden',
     display_json: (it.display&&it.display.mode==='json')? Object.assign({stem:it.display.stem||''}, it.display.options?{options:it.display.options}:{}) : null,
     image_path: (it.display&&it.display.mode==='image')? (it.display.path||it.display.src) : null}));
+  // remove any items in this form that are no longer in the imported map (e.g., items you deleted)
+  const positions=rows.map(r=>r.pos);
+  if(positions.length){
+    const {error:de}=await SB.from('items').delete().eq('form_id',currentFormId).not('pos','in','('+positions.join(',')+')');
+    if(de) console.error('prune old items',de);
+  }
   const {error}=await SB.from('items').upsert(rows,{onConflict:'form_id,pos'});
   if(error){alert('Items save failed: '+error.message);return false;}
   return true;
