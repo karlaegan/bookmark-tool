@@ -1285,7 +1285,12 @@ async function onImportItemMap(input){
   catch(e){ alert('Could not read file: '+e.message); return; }
   if(!grid||!grid.length){alert('That sheet looks empty.');return;}
   let hr=0;
-  for(let i=0;i<Math.min(8,grid.length);i++){const j=grid[i].map(imNorm).join(' '); if(j.indexOf('what does')>=0||j.indexOf('oib')>=0||j.indexOf('order position')>=0){hr=i;break;}}
+  // find the header row by matching header WORDS in a cell (not 'oib' anywhere — item-image
+  // filenames like "..._OIB1.png" contain 'oib' and were fooling the scan into a data row)
+  for(let i=0;i<Math.min(8,grid.length);i++){
+    const cells=grid[i].map(imNorm);
+    if(cells.some(c=> c==='order'||c==='oib'||c.indexOf('oib order')>=0||c.indexOf('order position')>=0||c.indexOf('order of')>=0||c.indexOf('what does')>=0)){hr=i;break;}
+  }
   const headers=grid[hr]; const m=detectItemMapCols(headers);
   if(m.order<0){alert("Couldn't find an order-of-difficulty column (looked for OIB / Order). Please check the header row.");return;}
   const get=(row,k)=>m[k]>=0?row[m[k]]:'';
