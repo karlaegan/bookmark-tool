@@ -164,10 +164,6 @@
     <label>Email</label><input id="liEmail" placeholder="you@example.org">
     <label>Password</label><input id="liPass" type="password" placeholder="Your password">
     <button class="cta" style="width:100%;margin-top:18px" onclick="doLogin()">Sign in</button>
-    <div id="magicWrap" style="margin-top:14px;text-align:center">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">No password? Enter your email above and</div>
-      <button class="cta ghost" style="width:100%" onclick="emailMeALink()">Email me a sign-in link</button>
-    </div>
     <div class="note" id="loginNote"></div>
   </div>
   <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">© 2026 EdMetric LLC. All rights reserved.</div>
@@ -1606,10 +1602,8 @@ function showLogin(){
   if(USE_SB){
     // role comes from the database, not chosen here
     document.getElementById('roleSeg').style.display='none';
-    document.getElementById('magicWrap').style.display='block';
-    document.getElementById('loginNote').innerHTML='Panelists: just enter your email and tap &ldquo;Email me a sign-in link.&rdquo; No password needed.';
+    document.getElementById('loginNote').innerHTML='Sign in with the email and password your facilitator gave you.';
   } else {
-    document.getElementById('magicWrap').style.display='none';
     pickRole(selectedRole);
   }
 }
