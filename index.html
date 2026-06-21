@@ -457,7 +457,7 @@ function home(){
       <div class="kv"><span>Content area</span><b>${cfg.contentArea}</b></div>
       <div class="kv"><span>${escHtml(cfg.gradeLabel||'Grade')}</span><b>${cfg.grade}</b></div>
       <div class="kv"><span>Table</span><b>Table ${cfg.tableNo}</b></div>
-      <div class="kv"><span>Table leader</span><b>${cfg.tableLeader}</b></div>
+      <div class="kv"><span>Facilitator</span><b>${escHtml(cfg.facilitator||cfg.tableLeader||'—')}</b></div>
     </div>
     <div class="card"><h3>Today&#699;s focus</h3>
       ${(USE_SB && sbForms.length) ? `
@@ -1775,9 +1775,12 @@ async function loadFormsSB(gid){
 }
 async function loadGroupContext(gid){
   currentGroupId=gid;
+  cfg.facilitator='';
   if(gid){
     const {data:g}=await SB.from('groups').select('*').eq('id',gid).maybeSingle();
     if(g){ cfg.groupName=g.name; cfg.groupContentArea=g.content_area; cfg.groupGrade=g.grade; }
+    // the room's facilitator (via a secure function — panelists can't read other roster rows directly)
+    try{ const {data:fn}=await SB.rpc('group_facilitator',{gid}); if(fn) cfg.facilitator=fn; }catch(e){}
   }
   await loadFormsSB(gid);
   const first = (userRole==='panelist') ? (sbForms.find(f=>f.status!=='closed')||sbForms[0]) : sbForms[0];
