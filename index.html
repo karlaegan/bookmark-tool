@@ -374,11 +374,11 @@ function tableMediansCard(){
   let rows='';
   tables.forEach(t=>{
     rows+='<tr><td style="text-align:left">Table '+escHtml(t)+'</td>';
-    for(let c=1;c<=nCuts();c++){ const m=sbTableMed[t][c]; rows+='<td>'+((m&&m.median_scale!=null)?Math.round(m.median_scale)+' <span style="color:var(--muted);font-size:11px">(n='+m.n+')</span>':'—')+'</td>'; }
+    for(let c=1;c<=nCuts();c++){ const m=sbTableMed[t][c]; rows+='<td>'+((m&&m.median_scale!=null)?fmtScale(m.median_scale)+' <span style="color:var(--muted);font-size:11px">(n='+m.n+')</span>':'—')+'</td>'; }
     rows+='</tr>';
   });
   rows+='<tr style="font-weight:bold;background:var(--light-green)"><td style="text-align:left">Whole room</td>';
-  for(let c=1;c<=nCuts();c++){ const m=sbMedians&&sbMedians[c]; rows+='<td>'+((m&&m.median_scale!=null)?Math.round(m.median_scale):'—')+'</td>'; }
+  for(let c=1;c<=nCuts();c++){ const m=sbMedians&&sbMedians[c]; rows+='<td>'+((m&&m.median_scale!=null)?fmtScale(m.median_scale):'—')+'</td>'; }
   rows+='</tr>';
   return '<div class="card"><h3>Medians by table — round '+(viewRound||cfg.currentRound)+'</h3><table><thead><tr>'+head+'</tr></thead><tbody>'+rows+'</tbody></table><div class="legend">Per-table medians for table discussion; the shaded row is the whole-room median.</div></div>';
 }
@@ -574,10 +574,10 @@ function cuts(){
   let rows="";
   for(let c=1;c<=nCuts();c++){
     const placed=bookmarks[c]!=null;
-    const you= placed ? Math.round(myCutScale(c)) : '<span style="color:#c0392b">not placed</span>';
+    const you= placed ? fmtScale(myCutScale(c)) : '<span style="color:#c0392b">not placed</span>';
     let medianCell='<span style="color:#bbb">—</span>';
     if(released){
-      if(USE_SB){ const m=sbMedians&&sbMedians[c]; medianCell = (m&&m.median_scale!=null) ? Math.round(m.median_scale)+' <span style="color:var(--muted);font-size:11px">(n='+m.n+')</span>' : '<span style="color:#bbb">—</span>'; }
+      if(USE_SB){ const m=sbMedians&&sbMedians[c]; medianCell = (m&&m.median_scale!=null) ? fmtScale(m.median_scale)+' <span style="color:var(--muted);font-size:11px">(n='+m.n+')</span>' : '<span style="color:#bbb">—</span>'; }
       else { medianCell = Math.round(toScore(Math.round(itemCount()*c/(nCuts()+1)))); }
     }
     rows+=`<tr>
@@ -603,7 +603,13 @@ function cuts(){
   ${graphics}`;
 }
 function distChart(dist){
-  const N=itemCount();
+  // Range must cover the real booklet. itemCount() can fall back to the
+  // synthetic config.booklet length (e.g. 15) when the OIB isn't loaded in
+  // memory (common on the results/facilitator view), which truncated the
+  // chart. Expand N to the highest item position that actually has data.
+  let N=itemCount();
+  for(let c=1;c<=nCuts();c++){ const d=(dist&&dist[c])||{}; for(const k in d){ const p=+k; if(p>N) N=p; } }
+  if(posToItemId){ for(const k in posToItemId){ const p=+k; if(p>N) N=p; } }
   let html='';
   let any=false;
   for(let c=1;c<=nCuts();c++){
@@ -642,7 +648,7 @@ function spreadGraphic(){
     const L=pos(m.min_scale),R=pos(m.max_scale),M=pos(m.median_scale),col=cfg.levels[c].color;
     return `<div style="margin:10px 0">
       <div style="font-size:12px;color:var(--med-green);font-weight:bold;margin-bottom:3px">Cut ${c}: ${cfg.levels[c-1].name} → ${cfg.levels[c].name}
-        &nbsp;<span style="color:var(--muted);font-weight:normal">median ${Math.round(m.median_scale)}, range ${Math.round(m.min_scale)}–${Math.round(m.max_scale)}, n=${m.n}</span></div>
+        &nbsp;<span style="color:var(--muted);font-weight:normal">median ${fmtScale(m.median_scale)}, range ${fmtScale(m.min_scale)}–${fmtScale(m.max_scale)}, n=${m.n}</span></div>
       <div style="position:relative;height:18px;background:var(--light-green);border:1px solid var(--border);border-radius:9px">
         <div style="position:absolute;left:${L}%;width:${Math.max(2,R-L)}%;top:3px;height:10px;background:${col};opacity:.4;border-radius:6px"></div>
         <div style="position:absolute;left:${M}%;top:0;height:18px;width:3px;background:${col}"></div>
@@ -923,6 +929,10 @@ function _med(a){if(!a.length)return null;const s=[...a].sort((x,y)=>x-y);const 
 function _mean(a){return a.length?a.reduce((x,y)=>x+y,0)/a.length:null;}
 function _sd(a){if(a.length<2)return null;const m=_mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1));}
 function r1(x){return x==null||isNaN(x)?'':Math.round(x*10)/10;}
+/* format a scale/median value for DISPLAY. The booklet may use a theta scale
+   (decimals like -7.05) so we must NOT round to whole numbers. Default 2 dp;
+   trailing zeros trimmed (5 -> "5", -3.40 -> "-3.4"). */
+function fmtScale(x){ if(x==null||isNaN(x))return '—'; const d=(cfg&&cfg.booklet&&cfg.booklet.scaleDecimals!=null)?cfg.booklet.scaleDecimals:2; const f=Math.pow(10,d); return String(Math.round(Number(x)*f)/f); }
 function roundCutScale(rnd){const out=[];for(let c=1;c<=nCuts();c++){const v=reportRaw.bm.filter(b=>b.round===rnd&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score);out.push(_med(v));}return out;}
 function impactFor(cutScales){
   const dist=reportRaw.impact; if(!dist||!dist.length) return null;
@@ -947,8 +957,8 @@ function reportTables(){
   (()=>{ const head=['Cut']; for(let r=1;r<=R;r++)head.push('Round '+r); head.push('Final');
     const aoa=[head];
     for(let c=1;c<=nc;c++){ const row=[cutLabel(c)]; let last=null;
-      for(let r=1;r<=R;r++){ const m=roundCutScale(r)[c-1]; row.push(m!=null?Math.round(m):''); if(m!=null)last=m; }
-      row.push(last!=null?Math.round(last):''); aoa.push(row); }
+      for(let r=1;r<=R;r++){ const m=roundCutScale(r)[c-1]; row.push(m!=null?fmtScale(m):''); if(m!=null)last=m; }
+      row.push(last!=null?fmtScale(last):''); aoa.push(row); }
     tables.push({title:'Cut Scores by Round (median scale score)',aoa}); })();
   // 2) Panelist agreement / spread
   (()=>{ const aoa=[['Round','Cut','n','Median','Min','Max','Range','SD']];
@@ -966,9 +976,9 @@ function reportTables(){
     const ts=[...new Set(reportRaw.bm.filter(b=>b.round===fr).map(b=>(b.panelists&&b.panelists.table_no)||'—'))].sort();
     const head=['Table']; for(let c=1;c<=nc;c++)head.push('Cut '+c); const aoa=[head];
     ts.forEach(t=>{ const row=['Table '+t];
-      for(let c=1;c<=nc;c++){ const v=reportRaw.bm.filter(b=>b.round===fr&&b.cut_number===c&&((b.panelists&&b.panelists.table_no)||'—')===t&&b.scale_score!=null).map(b=>+b.scale_score); row.push(v.length?Math.round(_med(v)):''); }
+      for(let c=1;c<=nc;c++){ const v=reportRaw.bm.filter(b=>b.round===fr&&b.cut_number===c&&((b.panelists&&b.panelists.table_no)||'—')===t&&b.scale_score!=null).map(b=>+b.scale_score); row.push(v.length?fmtScale(_med(v)):''); }
       aoa.push(row); });
-    const rr=['Whole room']; for(let c=1;c<=nc;c++){ const v=reportRaw.bm.filter(b=>b.round===fr&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score); rr.push(v.length?Math.round(_med(v)):''); }
+    const rr=['Whole room']; for(let c=1;c<=nc;c++){ const v=reportRaw.bm.filter(b=>b.round===fr&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score); rr.push(v.length?fmtScale(_med(v)):''); }
     aoa.push(rr);
     tables.push({title:'Medians by Table — Final Round '+fr,aoa}); })();
   // 5) Panelist appendix (final round scale per cut)
@@ -976,7 +986,7 @@ function reportTables(){
     const seen=new Map(); reportRaw.bm.filter(b=>b.round===fr).forEach(b=>{ if(!seen.has(b.panelist_id))seen.set(b.panelist_id,b.panelists||{}); });
     [...seen.entries()].forEach(([pid,p])=>{ const nm=(((p.first_name||'')+' '+(p.last_name||'')).trim())||'Panelist';
       const row=[nm,p.table_no||'—'];
-      for(let c=1;c<=nc;c++){ const b=reportRaw.bm.find(x=>x.panelist_id===pid&&x.round===fr&&x.cut_number===c); row.push(b&&b.scale_score!=null?Math.round(+b.scale_score):''); }
+      for(let c=1;c<=nc;c++){ const b=reportRaw.bm.find(x=>x.panelist_id===pid&&x.round===fr&&x.cut_number===c); row.push(b&&b.scale_score!=null?fmtScale(+b.scale_score):''); }
       aoa.push(row); });
     tables.push({title:'Panelist Cut Scores — Final Round '+fr+' (appendix)',aoa}); })();
   return tables;
@@ -1052,7 +1062,7 @@ function crossGradeTables(){
     const head=['Grade']; for(let c=1;c<=nc;c++)head.push('Cut '+c+': '+cfg.levels[c-1].name+' → '+cfg.levels[c].name);
     const aoa=[head];
     forms.forEach(f=>{ const maxR=Math.max(1,...f.bm.map(b=>b.round||1)); const row=[f.grade||f.name||'—'];
-      for(let c=1;c<=nc;c++){ const v=f.bm.filter(b=>b.round===maxR&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score); row.push(v.length?Math.round(_med(v)):''); }
+      for(let c=1;c<=nc;c++){ const v=f.bm.filter(b=>b.round===maxR&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score); row.push(v.length?fmtScale(_med(v)):''); }
       aoa.push(row); });
     out.push({title:'Final Cut Scores by Grade — '+ca, aoa});
   });
@@ -1313,8 +1323,13 @@ async function onImportItemMap(input){
   const lbl=k=>m[k]>=0?('"'+imNorm(headers[m[k]]).slice(0,28)+'"'):'(none)';
   const msg='Detected columns:\n  order = '+lbl('order')+'\n  item id = '+lbl('item_id')+'\n  scale = '+lbl('scale')+'\n  score point = '+lbl('score_point')+'\n  standard = '+lbl('standard')+'\n  item type = '+lbl('item_type')+'\n  key = '+lbl('key')+'\n\n'+newItems.length+' items found. Import and replace the current booklet?';
   if(!confirm(msg))return;
+  // Preserve existing item images on re-import: carry the picture link forward
+  // for any position that already had one, so re-importing a map (e.g. to fix
+  // scale values) does NOT wipe the uploaded images.
+  const oldImgByPos={}; (oib||[]).forEach(it=>{ if(it&&it.display&&it.display.mode==='image'&&(it.display.path||it.display.src)) oldImgByPos[it.pos]=it.display; });
+  let _carried=0; newItems.forEach(it=>{ if(oldImgByPos[it.pos]){ it.display=oldImgByPos[it.pos]; _carried++; } });
   oib=newItems; saveOIB(); initBookmarks(); reviewIdx=0; render();
-  if(USE_SB){ const ok=await saveItemsSB(); if(ok){ toast('✓ Item map uploaded — '+newItems.length+' items saved for this room'); } else { alert('Imported locally, but the database save failed.'); } }
+  if(USE_SB){ const ok=await saveItemsSB(); if(ok){ toast('✓ Item map uploaded — '+newItems.length+' items saved'+(_carried?' ('+_carried+' images kept)':'')); } else { alert('Imported locally, but the database save failed.'); } }
   else toast('✓ Imported '+newItems.length+' items (local)');
 }
 async function signImages(){
@@ -1502,8 +1517,8 @@ function release(){
     for(let c=1;c<=nCuts();c++){
       const m=sbMedians&&sbMedians[c];
       rows+=`<tr><td>Cut ${c}: ${cfg.levels[c-1].name} → ${cfg.levels[c].name}</td>
-        <td>${m?Math.round(m.median_scale):'—'}</td>
-        <td>${m?Math.round(m.min_scale)+'–'+Math.round(m.max_scale):'—'}</td>
+        <td>${m?fmtScale(m.median_scale):'—'}</td>
+        <td>${m?fmtScale(m.min_scale)+'–'+fmtScale(m.max_scale):'—'}</td>
         <td>${m?m.n:'0'}</td></tr>`;
     }
     medTable=`<div class="card"><h3>Group medians — round ${viewRound||cfg.currentRound} <span style="font-size:11px;color:var(--muted)">(facilitator view)</span></h3>
