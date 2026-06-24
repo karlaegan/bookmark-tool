@@ -932,7 +932,7 @@ function r1(x){return x==null||isNaN(x)?'':Math.round(x*10)/10;}
 /* format a scale/median value for DISPLAY. The booklet may use a theta scale
    (decimals like -7.05) so we must NOT round to whole numbers. Default 2 dp;
    trailing zeros trimmed (5 -> "5", -3.40 -> "-3.4"). */
-function fmtScale(x){ if(x==null||isNaN(x))return '—'; const d=(cfg&&cfg.booklet&&cfg.booklet.scaleDecimals!=null)?cfg.booklet.scaleDecimals:2; const f=Math.pow(10,d); return String(Math.round(Number(x)*f)/f); }
+function fmtScale(x){ if(x==null||isNaN(x))return '—'; const d=(cfg&&cfg.booklet&&cfg.booklet.scaleDecimals!=null)?cfg.booklet.scaleDecimals:2; return Number(x).toFixed(d); }
 function roundCutScale(rnd){const out=[];for(let c=1;c<=nCuts();c++){const v=reportRaw.bm.filter(b=>b.round===rnd&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score);out.push(_med(v));}return out;}
 function impactFor(cutScales){
   const dist=reportRaw.impact; if(!dist||!dist.length) return null;
