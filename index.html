@@ -326,6 +326,11 @@ function renderSide(){
 /* ---- sequential gating: Review (all items) -> Survey -> Bookmarks -> My Cut Scores ---- */
 function reviewComplete(){
   const its=items();
+  // Once a panel is past Round 1, never re-gate the OIB — they already studied
+  // it in Round 1. This stops panelists in Round 2/3 from being bounced back to
+  // the OIB when client-side study state drifts (item re-import, a different
+  // browser/device, or a round change before state reloads).
+  if((cfg.currentRound||1)>1) return true;
   if(cfg.requireOIBComplete===false) return its.every(it=>visited[it.pos]);
   return its.every(it=>{const a=answers[it.pos];return a&&a.measures&&a.measures.trim()&&a.harder&&a.harder.trim();});
 }
@@ -672,11 +677,13 @@ function impactChart(){
     <table style="max-width:340px;margin-bottom:14px"><thead><tr><th style="text-align:left">Level</th><th>Percent</th></tr></thead><tbody>${trows}</tbody></table>
     <div class="bar-chart">${bars}</div></div>`;
 }
-/* Round-specific results: R1 = spread; R2 = impact + spread; R3 = impact only */
+/* Results graphics: impact from R2 on (when enabled); the panel's vote
+   distribution + spread shown EVERY round, including the final round, so
+   panelists can always see where their (final) votes landed. */
 function resultsGraphics(){
   const r=vRound(); let g='';
   if(r>=2 && cfg.showImpact!==false) g+=impactChart();
-  if(r<=2) g+=distChart(sbDist)+spreadGraphic();
+  g+=distChart(sbDist)+spreadGraphic();
   return g;
 }
 function demoImpact(){
@@ -1021,12 +1028,14 @@ function reports(){
 function reportFileBase(){ return 'StandardSetting_'+String(cfg.formName||cfg.groupName||'report').replace(/[^a-z0-9]+/gi,'_'); }
 async function exportReportXLSX(){
   try{ await ensureXLSX(); }catch(e){ alert(e.message); return; }
+  await loadReportSB();   // always export the CURRENTLY selected booklet (form switch may not have reloaded it)
   const tables=reportTables(); if(!tables.length){alert('No data to export yet.');return;}
   const wb=XLSX.utils.book_new();
   tables.forEach((t,i)=>{ const ws=XLSX.utils.aoa_to_sheet([[t.title],[],...t.aoa]); XLSX.utils.book_append_sheet(wb,ws,'Table '+(i+1)); });
   XLSX.writeFile(wb, reportFileBase()+'.xlsx');
 }
-function exportReportDoc(){
+async function exportReportDoc(){
+  await loadReportSB();   // always export the CURRENTLY selected booklet (form switch may not have reloaded it)
   const tables=reportTables(); if(!tables.length){alert('No data to export yet.');return;}
   const DG='#1A5025';
   const style='<style>body{font-family:Verdana,sans-serif;color:#333}h1{font-family:"Arial Black";color:'+DG+'}h2{font-family:"Arial Black";color:'+DG+';border-bottom:2px solid '+DG+';padding-bottom:4px}table{border-collapse:collapse;width:100%;margin-bottom:18px}th{background:'+DG+';color:#fff;padding:6px;border:1px solid #BBCABB}td{padding:5px;border:1px solid #BBCABB}tr:nth-child(even) td{background:#E8F0E8}</style>';
@@ -1080,6 +1089,7 @@ function _downloadDoc(bodyHtml,name){
 }
 async function exportAllXLSX(){
   try{ await ensureXLSX(); }catch(e){ alert(e.message); return; }
+  await loadReportAllSB();   // always export fresh data for every grade
   if(!reportAll){alert('Report data is still loading — try again in a moment.');return;}
   const wb=XLSX.utils.book_new();
   crossGradeTables().forEach((t,i)=>{ const ws=XLSX.utils.aoa_to_sheet([[t.title],[],...t.aoa]); XLSX.utils.book_append_sheet(wb,ws,('Summary '+(i+1)).slice(0,31)); });
@@ -1091,7 +1101,8 @@ async function exportAllXLSX(){
   if(!wb.SheetNames.length){alert('No data to export yet.');return;}
   XLSX.writeFile(wb,'StandardSetting_AllGrades.xlsx');
 }
-function exportAllDoc(){
+async function exportAllDoc(){
+  await loadReportAllSB();   // always export fresh data for every grade
   if(!reportAll){alert('Report data is still loading — try again in a moment.');return;}
   let body='<h1>Standard Setting — Technical Report Tables (All Grades)</h1><p><i>'+escHtml(cfg.workshopTitle||'')+'</i></p>';
   const cg=crossGradeTables(); cg.forEach(t=>{ body+=_tableHtml(t); });
@@ -1464,6 +1475,7 @@ function setup(){
   </div>
   <div class="card"><h3>Options</h3>
     <label style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px"><input type="checkbox" ${cfg.showImpact!==false?'checked':''} onchange="cf('showImpact',this.checked)"> Show impact data to panelists <span class="legend" style="margin:0">(uncheck if this study doesn&#699;t use impact)</span></label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;margin-top:8px"><input type="checkbox" ${cfg._wsRequireOIB!==false?'checked':''} onchange="cf('_wsRequireOIB',this.checked)"> Require panelists to write OIB notes before bookmarks <span class="legend" style="margin:0">(workshop default — uncheck to let panelists skip the two OIB questions; individual grades can override)</span></label>
     <div class="legend" style="margin-top:6px">Remember to <b>Save workshop to database</b> for this to apply to everyone.</div>
   </div>
   <div class="card"><h3>Item map columns (panelist view)</h3>
@@ -1760,7 +1772,7 @@ async function loadFromSupabase(){
   cfg.panelistName=((pan.first_name||'')+' '+(pan.last_name||'')).trim()||pan.email;
   cfg.contentArea=pan.content_area||cfg.contentArea; cfg.grade=pan.grade||cfg.grade; cfg.tableNo=pan.table_no||cfg.tableNo;
   const {data:ws}=await SB.from('workshops').select('*').eq('id',W).single();
-  if(ws){cfg.workshopTitle=ws.title;cfg.subtitle=ws.subtitle;cfg.rounds=ws.rounds;cfg.currentRound=ws.current_round;cfg.resultsReleased=ws.results_released;cfg.requireOIBComplete=ws.require_oib_complete;cfg.showImpact=ws.show_impact!==false;
+  if(ws){cfg.workshopTitle=ws.title;cfg.subtitle=ws.subtitle;cfg.rounds=ws.rounds;cfg.currentRound=ws.current_round;cfg.resultsReleased=ws.results_released;cfg.requireOIBComplete=ws.require_oib_complete;cfg._wsRequireOIB=ws.require_oib_complete;cfg.showImpact=ws.show_impact!==false;
     if(ws.content_areas&&ws.content_areas.length)cfg.contentAreas=ws.content_areas;
     if(ws.grades&&ws.grades.length)cfg.grades=ws.grades;
     if(ws.greeting)cfg.greeting=ws.greeting;
@@ -1804,7 +1816,11 @@ async function loadGroupContext(gid){
 async function loadFormContext(fid){
   currentFormId=fid; reviewIdx=0;   // always start the booklet at the first item
   const fm=sbForms.find(f=>f.id===fid);
-  if(fm){ cfg.currentRound=fm.current_round||1; cfg.rounds=fm.rounds||cfg.rounds; cfg.resultsReleased=!!fm.results_released; cfg.formGrade=fm.grade; cfg.formName=fm.name; cfg.formStatus=fm.status; }
+  if(fm){ cfg.currentRound=fm.current_round||1; cfg.rounds=fm.rounds||cfg.rounds; cfg.resultsReleased=!!fm.results_released; cfg.formGrade=fm.grade; cfg.formName=fm.name; cfg.formStatus=fm.status;
+    // Per-form override of the OIB-notes requirement. null/undefined => inherit
+    // the workshop default; an explicit true/false on the form wins. Lets a
+    // single grade (e.g. Maths Year 8) skip the notes without changing others.
+    cfg.requireOIBComplete = (fm.require_oib_complete!=null) ? fm.require_oib_complete : cfg._wsRequireOIB; }
   viewRound=cfg.currentRound;   // facilitator results viewer defaults to the live round
   const itemCols = isFacRole()
     ? 'id,pos,page,scale,strand,score_point,item_type,pval,brief,display_mode,display_json,image_path,external_id,answer_key'
@@ -1821,6 +1837,7 @@ async function switchForm(fid){
   await loadFormContext(fid);
   if(userRole==='panelist') await loadProgressSB();
   await loadMediansSB();
+  if(view==='reports'){ try{ await loadReportSB(); await loadReportAllSB(); }catch(e){ console.error(e); } }  // keep Reports in sync with the selected booklet
   render();
   const f=sbForms.find(x=>x.id===fid);
   if(f) toast('Form: '+(f.name||f.grade||''));
@@ -1998,7 +2015,7 @@ async function loadResponsesSB(){
 /* ---------- facilitator setup writes ---------- */
 async function saveWorkshopSB(){
   const W=wid();
-  const {error}=await SB.from('workshops').update({title:cfg.workshopTitle,subtitle:cfg.subtitle,content_area:cfg.contentArea,grade:cfg.grade,rounds:cfg.rounds,current_round:cfg.currentRound,require_oib_complete:cfg.requireOIBComplete!==false,show_impact:cfg.showImpact!==false,content_areas:cfg.contentAreas||[],grades:cfg.grades||[],greeting:cfg.greeting||'Hello',grade_label:cfg.gradeLabel||'Grade',item_map_columns:cfg.itemMapColumns||IMCOL_DEFAULT}).eq('id',W);
+  const {error}=await SB.from('workshops').update({title:cfg.workshopTitle,subtitle:cfg.subtitle,content_area:cfg.contentArea,grade:cfg.grade,rounds:cfg.rounds,current_round:cfg.currentRound,require_oib_complete:(cfg._wsRequireOIB!=null?cfg._wsRequireOIB:cfg.requireOIBComplete)!==false,show_impact:cfg.showImpact!==false,content_areas:cfg.contentAreas||[],grades:cfg.grades||[],greeting:cfg.greeting||'Hello',grade_label:cfg.gradeLabel||'Grade',item_map_columns:cfg.itemMapColumns||IMCOL_DEFAULT}).eq('id',W);
   if(error){alert('Save failed: '+error.message);return;}
   await SB.from('achievement_levels').delete().eq('workshop_id',W);
   const rows=cfg.levels.map((l,i)=>({workshop_id:W,ordinal:i+1,name:l.name,short_label:l.short,color:l.color,descriptor:l.descriptor}));
