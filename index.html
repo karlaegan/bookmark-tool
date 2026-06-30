@@ -173,6 +173,7 @@
 <div class="topbar">
   <div class="logo" id="logo">EM</div>
   <div class="wstitle" id="wstitle"></div>
+  <select id="wsSwitch" onchange="switchWorkshop(this.value)" title="Switch workshop" style="display:none;margin-left:14px;background:#fff;color:#1A5025;border:none;border-radius:6px;padding:4px 8px;font-size:12.5px;font-weight:bold;max-width:240px"></select>
   <div class="right">
     <div class="modeToggle" id="modeToggle">
       <button id="mAdmin" onclick="setMode('admin')">Admin</button>
@@ -300,6 +301,36 @@ function paintHeader(){
   document.getElementById('wstitle').innerHTML=cfg.workshopTitle+"<small>"+cfg.subtitle+"</small>";
   const init=(cfg.panelistName||"").split(" ").map(s=>s[0]).join("").slice(0,2).toUpperCase();
   document.getElementById('avatar').textContent=init||"--";
+  renderWsSwitch();
+}
+/* ---------- workshop switcher (admin) — pick by NAME, never type a URL/UUID ---------- */
+let myWorkshops=[];
+async function loadMyWorkshops(){
+  myWorkshops=[];
+  if(!USE_SB || !isAdmin()) { renderWsSwitch(); return; }
+  try{
+    const u=(await SB.auth.getUser()).data.user; if(!u){ renderWsSwitch(); return; }
+    const {data:rows}=await SB.from('panelists').select('workshop_id').eq('auth_user_id',u.id).eq('role','admin');
+    const ids=[...new Set((rows||[]).map(r=>r.workshop_id))];
+    if(ids.length){ const {data:ws}=await SB.from('workshops').select('id,title').in('id',ids);
+      myWorkshops=(ws||[]).sort((a,b)=>(a.title||'').localeCompare(b.title||'')); }
+  }catch(e){ console.error('load my workshops',e); }
+  renderWsSwitch();
+}
+function renderWsSwitch(){
+  const sel=document.getElementById('wsSwitch'); if(!sel) return;
+  const cur=wid();
+  let list=myWorkshops.slice();
+  if(cur && !list.find(w=>w.id===cur)) list.unshift({id:cur,title:(cfg&&cfg.workshopTitle)||'Current workshop'});
+  if(!isAdmin() || list.length===0){ sel.style.display='none'; return; }
+  sel.innerHTML = list.map(w=>'<option value="'+w.id+'"'+(w.id===cur?' selected':'')+'>'+escHtml(w.title||w.id)+'</option>').join('')
+               + '<option value="__new__">＋ New workshop…</option>';
+  sel.style.display='';
+}
+function switchWorkshop(id){
+  if(id==='__new__'){ renderWsSwitch(); createWorkshopUI(); return; }   // reset selection, then create
+  if(!id || id===wid()) return;
+  location.href = location.origin+location.pathname+'?wf='+encodeURIComponent(id);
 }
 
 /* ---------- nav ---------- */
@@ -1025,8 +1056,8 @@ async function loadReportSB(){
   reportRaw=null;
   if(!currentFormId) return;
   const {data:bm}=await SB.from('bookmarks')
-    .select('round,cut_number,item_pos,scale_score,panelist_id,panelists(first_name,last_name,table_no)')
-    .eq('form_id',currentFormId);
+    .select('round,cut_number,item_pos,scale_score,panelist_id,panelists!inner(first_name,last_name,table_no,role)')
+    .eq('form_id',currentFormId).eq('panelists.role','panelist');   // exclude any facilitator/admin preview data
   const {data:imp}=await SB.from('impact_scores').select('scale_score,n_students').eq('form_id',currentFormId);
   reportRaw={bm:bm||[], impact:imp||[]};
 }
@@ -1178,7 +1209,7 @@ async function fetchAllSB(table, columns, filter){
 async function loadReportAllSB(){
   reportAll=null;
   const forms=await fetchAllSB('forms','id,name,grade,groups(content_area,grade)');
-  const bm=await fetchAllSB('bookmarks','round,cut_number,scale_score,panelist_id,form_id,panelists(first_name,last_name,table_no)');
+  const bm=await fetchAllSB('bookmarks','round,cut_number,scale_score,panelist_id,form_id,panelists!inner(first_name,last_name,table_no,role)', q=>q.eq('panelists.role','panelist'));   // exclude any facilitator/admin preview data
   const imp=await fetchAllSB('impact_scores','form_id,scale_score,n_students');
   const byForm={};
   (forms||[]).forEach(f=>{ byForm[f.id]={id:f.id,name:f.name,grade:f.grade,content_area:(f.groups&&f.groups.content_area)||'',bm:[],impact:[]}; });
@@ -1949,6 +1980,7 @@ async function loadFromSupabase(){
   let gid = pan.group_id || (sbGroups[0] && sbGroups[0].id) || null;
   await loadGroupContext(gid);
   await loadProgressSB();
+  if(isAdmin()){ try{ await loadMyWorkshops(); }catch(e){} }   // populate the workshop switcher
 }
 function mapDbItems(its){
   return (its||[]).map(it=>({pos:it.pos,page:it.page,scale:it.scale,strand:it.strand,scorePoint:it.score_point,itemType:it.item_type,pval:it.pval,brief:it.brief,id:it.id,external_id:it.external_id,answer_key:it.answer_key,
@@ -2039,6 +2071,7 @@ async function loadProgressSB(){
   (sv||[]).forEach(x=>{if(x.question_key==='readiness'&&x.answer!=null&&x.answer!=='')surveyState.q1=parseInt(x.answer);});
 }
 async function saveAnsSB(pos){
+  if(userRole!=='panelist') return;   // facilitator/admin in panelist-PREVIEW must never write panelist data
   const it=itemAt(pos); if(!it||!it.id)return; const a=answers[pos]||{};
   _savesInFlight++;
   try{
@@ -2047,6 +2080,7 @@ async function saveAnsSB(pos){
   } finally { _savesInFlight--; }
 }
 async function saveBmSB(c){
+  if(userRole!=='panelist') return true;   // facilitator/admin in panelist-PREVIEW must never write panelist data
   const pos=bookmarks[c];
   _savesInFlight++;
   try{
@@ -2063,6 +2097,7 @@ async function saveBmSB(c){
   } finally { _savesInFlight--; }
 }
 async function saveSurveySB(){
+  if(userRole!=='panelist') return;   // facilitator/admin in panelist-PREVIEW must never write panelist data
   _savesInFlight++;
   try{
     const {error}=await SB.from('survey_responses').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,round:cfg.currentRound,question_key:'readiness',answer:String(surveyState.q1)},{onConflict:'panelist_id,form_id,round,question_key'});
