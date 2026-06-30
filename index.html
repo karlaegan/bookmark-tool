@@ -1048,11 +1048,28 @@ async function exportReportDoc(){
 }
 /* ----- all grades (whole workshop) ----- */
 let reportAll=null;   // [{id,name,grade,content_area,bm:[],impact:[]}] for every form
+/* Page through ALL rows: Supabase caps a single select at 1000 rows by default,
+   which silently dropped later grades (e.g. Year 8+) from the all-grades export.
+   Keep fetching in 1000-row windows until a short page comes back. */
+async function fetchAllSB(table, columns, filter){
+  const out=[]; const size=1000; let from=0;
+  for(;;){
+    let q=SB.from(table).select(columns);
+    if(filter) q=filter(q);
+    const {data,error}=await q.range(from, from+size-1);
+    if(error){ console.error('fetchAllSB',table,error); break; }
+    if(!data||!data.length) break;
+    out.push(...data);
+    if(data.length<size) break;
+    from+=size;
+  }
+  return out;
+}
 async function loadReportAllSB(){
   reportAll=null;
-  const {data:forms}=await SB.from('forms').select('id,name,grade,groups(content_area,grade)');
-  const {data:bm}=await SB.from('bookmarks').select('round,cut_number,scale_score,panelist_id,form_id,panelists(first_name,last_name,table_no)');
-  const {data:imp}=await SB.from('impact_scores').select('form_id,scale_score,n_students');
+  const forms=await fetchAllSB('forms','id,name,grade,groups(content_area,grade)');
+  const bm=await fetchAllSB('bookmarks','round,cut_number,scale_score,panelist_id,form_id,panelists(first_name,last_name,table_no)');
+  const imp=await fetchAllSB('impact_scores','form_id,scale_score,n_students');
   const byForm={};
   (forms||[]).forEach(f=>{ byForm[f.id]={id:f.id,name:f.name,grade:f.grade,content_area:(f.groups&&f.groups.content_area)||'',bm:[],impact:[]}; });
   (bm||[]).forEach(b=>{ if(byForm[b.form_id]) byForm[b.form_id].bm.push(b); });
@@ -2043,16 +2060,17 @@ async function saveItemsSB(){
 async function saveItemsSBButton(){ if(await saveItemsSB()) alert('Saved '+itemCount()+' items to the database.'); }
 async function archiveWorkshop(){
   const W=wid();
+  const byWf=q=>q.eq('workshop_id',W);
   const [ws,lv,pan,its,resp,bm,sv]=await Promise.all([
     SB.from('workshops').select('*').eq('id',W).single(),
     SB.from('achievement_levels').select('*').eq('workshop_id',W).order('ordinal'),
-    SB.from('panelists').select('*').eq('workshop_id',W),
-    SB.from('items').select('*').eq('workshop_id',W).order('pos'),
-    SB.from('oib_responses').select('*').eq('workshop_id',W),
-    SB.from('bookmarks').select('*').eq('workshop_id',W),
-    SB.from('survey_responses').select('*').eq('workshop_id',W)
+    fetchAllSB('panelists','*',byWf),
+    fetchAllSB('items','*',q=>q.eq('workshop_id',W).order('pos')),
+    fetchAllSB('oib_responses','*',byWf),
+    fetchAllSB('bookmarks','*',byWf),
+    fetchAllSB('survey_responses','*',byWf)
   ]);
-  const archive={exported_at:new Date().toISOString(),workshop:ws.data,achievement_levels:lv.data,panelists:pan.data,items:its.data,oib_responses:resp.data,bookmarks:bm.data,survey_responses:sv.data};
+  const archive={exported_at:new Date().toISOString(),workshop:ws.data,achievement_levels:lv.data,panelists:pan,items:its,oib_responses:resp,bookmarks:bm,survey_responses:sv};
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(archive,null,2)],{type:'application/json'}));
   a.download='workshop-archive-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
