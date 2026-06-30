@@ -241,6 +241,10 @@ function isGroupFac(){return userRole==='group_facilitator';}
 function isFacRole(){return isAdmin()||isGroupFac();}
 function vRound(){return (isFacRole()&&viewRound)?viewRound:(cfg.currentRound||1);}  // round whose results are displayed
 let ansTimer={};
+/* M5: don't let the 15s auto-refresh clobber a panelist's unsaved/in-flight edits. */
+let _savesInFlight=0;
+function hasPendingEdits(){ return _savesInFlight>0 || Object.values(ansTimer).some(t=>t); }
+function flushPendingNotes(){ Object.keys(ansTimer).forEach(p=>{ if(ansTimer[p]){ clearTimeout(ansTimer[p]); ansTimer[p]=null; if(typeof saveAnsSB==='function') saveAnsSB(+p); } }); }
 function wid(){return window.SUPABASE_CONFIG.workshopId;}
 
 function loadCfg(){
@@ -309,6 +313,7 @@ const FAC_NAV=[
   {k:"progress",ic:"◷",t:"Panel progress"},
   {k:"responses",ic:"▦",t:"Item Responses"},
   {k:"release",ic:"⚑",t:"Results & Release"},
+  {k:"rounds",ic:"⟲",t:"Round control"},
   {k:"reports",ic:"⤓",t:"Reports & Export"}
 ];
 function renderSide(){
@@ -396,11 +401,11 @@ function countComplete(){return items().filter(it=>{const a=answers[it.pos];retu
 function firstIncomplete(){const its=items();for(let i=0;i<its.length;i++){const a=answers[its[i].pos];if(!(a&&a.measures&&a.measures.trim()&&a.harder&&a.harder.trim()))return i;}return its.length-1;}
 function goView(k){
   // panelists can never reach facilitator views
-  if((k==='setup'||k==='oibmgr'||k==='people'||k==='groups'||k==='overview'||k==='reports') && !isAdmin()) return;   // admin-only
+  if((k==='setup'||k==='oibmgr'||k==='people'||k==='groups'||k==='overview'||k==='reports'||k==='rounds') && !isAdmin()) return;   // admin-only
   if((k==='release'||k==='responses'||k==='progress') && !isFacRole()) return;                         // admin or group facilitator
   if(mode==='panelist' && isLocked(k)){ lockedMsg(k); return; }
   view=k;
-  if(USE_SB && k==='overview'){ loadOverviewSB().then(render).catch(e=>{console.error(e);render();}); return; }
+  if(USE_SB && (k==='overview'||k==='rounds')){ loadOverviewSB().then(render).catch(e=>{console.error(e);render();}); return; }
   if(USE_SB && k==='progress'){ loadPanelProgressSB().then(render).catch(e=>{console.error(e);render();}); return; }
   if(USE_SB && k==='people'){ loadPanelistsSB().then(render).catch(e=>{console.error(e);render();}); return; }
   if(USE_SB && k==='responses'){ loadResponsesSB().then(render).catch(e=>{console.error(e);render();}); return; }
@@ -426,7 +431,7 @@ function setMode(m){
 function render(){
   paintHeader();renderSide();
   const c=document.getElementById('content');
-  const f={home,ald,review:reviewOIB,itemmap,bookmark,survey,cuts,setup,groups,people,oibmgr,responses,release,overview,progress,reports,pw};
+  const f={home,ald,review:reviewOIB,itemmap,bookmark,survey,cuts,setup,groups,people,oibmgr,responses,release,overview,progress,reports,rounds:roundControl,pw};
   let html=(f[view]||home)();
   if(isFacRole() && USE_SB){
     let bar='';
@@ -583,7 +588,7 @@ function cuts(){
     let medianCell='<span style="color:#bbb">—</span>';
     if(released){
       if(USE_SB){ const m=sbMedians&&sbMedians[c]; medianCell = (m&&m.median_scale!=null) ? fmtScale(m.median_scale)+' <span style="color:var(--muted);font-size:11px">(n='+m.n+')</span>' : '<span style="color:#bbb">—</span>'; }
-      else { medianCell = Math.round(toScore(Math.round(itemCount()*c/(nCuts()+1)))); }
+      else { medianCell = '<span style="color:#bbb">—</span>'; }   // L3: never show a fabricated median; only real group medians from the DB
     }
     rows+=`<tr>
       <td>${cfg.levels[c-1].name} &rarr; ${cfg.levels[c].name}<br><span class="tag" style="background:${cfg.levels[c].color}">Cut ${c}</span></td>
@@ -621,7 +626,7 @@ function distChart(dist){
     const d=(dist&&dist[c])||{};
     const freqs=Object.values(d); const total=freqs.reduce((a,b)=>a+b,0);
     if(total>0)any=true;
-    const maxFreq=Math.max(1,...freqs);
+    const maxFreq=arrMax(freqs,1);
     const col=cfg.levels[c].color;
     const barW = N>60?9:(N>35?12:(N>18?18:26));   // fixed width; chart scrolls if needed
     const every = N>60?10:(N>30?5:1);             // sparse x-axis labels for big booklets
@@ -646,7 +651,7 @@ function distChart(dist){
 function spreadGraphic(){
   const ms=[]; for(let c=1;c<=nCuts();c++){ const m=sbMedians&&sbMedians[c]; if(m&&m.median_scale!=null) ms.push({c,m}); }
   if(!ms.length) return `<div class="card"><h3>Group results</h3><p style="color:var(--muted)">No panelist bookmarks recorded for this round yet.</p></div>`;
-  let lo=Math.min(...ms.map(x=>Number(x.m.min_scale))), hi=Math.max(...ms.map(x=>Number(x.m.max_scale)));
+  let lo=arrMin(ms.map(x=>Number(x.m.min_scale))), hi=arrMax(ms.map(x=>Number(x.m.max_scale)));
   if(lo===hi){lo-=10;hi+=10;}
   const pos=v=>((Number(v)-lo)/(hi-lo))*100;
   const bars=ms.map(({c,m})=>{
@@ -761,7 +766,7 @@ function setAns(pos,field,val){
   if(panelEditLocked()) return;   // locked once results released / booklet closed
   if(!answers[pos])answers[pos]={measures:"",harder:""};
   answers[pos][field]=val;saveAnswers();
-  if(USE_SB){ clearTimeout(ansTimer[pos]); ansTimer[pos]=setTimeout(()=>saveAnsSB(pos),600); }
+  if(USE_SB){ clearTimeout(ansTimer[pos]); ansTimer[pos]=setTimeout(()=>{ ansTimer[pos]=null; saveAnsSB(pos); },600); }
   const prog=document.querySelector('.reviewbar .prog');
   if(prog){const N=itemCount();const done=countComplete();prog.innerHTML='Item '+pos+' of '+N+' · <b>'+done+' of '+N+' complete</b>'+(done===N?' ✓':'');}
 }
@@ -921,6 +926,73 @@ function overview(){
     <tbody>${trs||'<tr><td colspan="'+ncol+'" style="color:#bbb">No forms yet.</td></tr>'}</tbody></table></div>`;
 }
 
+/* ---------- Round control (admin): open/reopen/advance rounds per form ---------- */
+function rcLabel(r){ return ((r.content_area||'')+' · '+(r.form_grade||r.grade||r.name||'—')); }
+function roundControl(){
+  if(!USE_SB) return `<h2 class="h">Round control</h2><p class="lede">Requires the database connection.</p>`;
+  if(!isAdmin()) return `<h2 class="h">Round control</h2><p class="lede">Admins only.</p>`;
+  const maxR=cfg.rounds||3;
+  const rows=sbOverview.map(r=>{
+    const cur=r.current_round||1; const top=Math.max(maxR,cur);
+    let opts=''; for(let k=1;k<=top;k++) opts+='<option value="'+k+'"'+(k===cur?' selected':'')+'>Round '+k+'</option>';
+    return `<tr>
+      <td style="text-align:left">${escHtml(rcLabel(r))}</td>
+      <td style="white-space:nowrap">
+        <button class="cta ghost small" ${cur<=1?'disabled':''} onclick="adminSetFormRound('${r.form_id}',${cur-1})">◀ Back</button>
+        <select onchange="adminSetFormRound('${r.form_id}',this.value)" style="margin:0 4px">${opts}</select>
+        <button class="cta ghost small" onclick="adminSetFormRound('${r.form_id}',${cur+1})">Advance ▶</button>
+      </td>
+      <td>${r.results_released?'<span class="answered">released</span>':'held'}</td>
+      <td><button class="cta ghost small" onclick="adminToggleRelease('${r.form_id}',${r.results_released?'false':'true'})">${r.results_released?'Hold results':'Release results'}</button></td>
+      <td>${r.n_bookmarked}/${r.n_panelists}</td>
+    </tr>`;}).join('');
+  return `<h2 class="h">Round control</h2>
+  <p class="lede">Move any form forward or back a round, jump to a specific round, or release/hold results — without leaving this screen. Going <b>back</b> keeps that round's cuts; you'll be asked whether to also clear the abandoned later rounds.</p>
+  <div style="margin-bottom:12px"><button class="cta ghost" onclick="adminSetAllRounds()">Set ALL forms to round…</button> <span class="legend">Bulk reset every form to the same round (results held).</span></div>
+  <div class="card"><table>
+    <thead><tr><th style="text-align:left">Form</th><th>Round</th><th>Results</th><th>Release</th><th>Bookmarked</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="5" style="color:#bbb">No forms yet.</td></tr>'}</tbody></table></div>`;
+}
+async function adminSetFormRound(formId,n){
+  n=parseInt(n,10); if(isNaN(n)||n<1) return;
+  const r=sbOverview.find(x=>x.form_id===formId); const cur=r?r.current_round||1:null; const label=r?rcLabel(r):'this form';
+  if(cur!=null && n===cur) return;
+  let clearHigher=false;
+  if(cur!=null && n<cur){
+    if(!confirm('Move '+label+' BACK from round '+cur+' to round '+n+'?\n\nPanelists return to round '+n+'; their round '+n+' cuts are intact.')) return;
+    clearHigher = confirm('Also DELETE bookmarks placed in rounds after '+n+' (round '+(n+1)+' and up)?\n\nOK = delete those abandoned rounds.   Cancel = keep them.');
+  }
+  const newRounds=Math.max((r&&r.rounds)||cfg.rounds||1, n);
+  const {data,error}=await SB.from('forms').update({current_round:n, rounds:newRounds, results_released:false}).eq('id',formId).select();
+  if(error){ alert('Could not change the round: '+error.message); return; }
+  if(!data||!data.length){ alert('Not saved — your login may not have permission to edit this form.'); return; }
+  if(clearHigher){ const {error:de}=await SB.from('bookmarks').delete().eq('form_id',formId).gt('round',n); if(de){console.error('clear later rounds',de); alert('Round changed, but clearing later rounds failed: '+de.message);} }
+  if(formId===currentFormId){ cfg.currentRound=n; cfg.rounds=newRounds; cfg.resultsReleased=false; viewRound=n; const fm=sbForms.find(f=>f.id===formId); if(fm){fm.current_round=n;fm.rounds=newRounds;fm.results_released=false;} }
+  await loadOverviewSB(); render();
+  toast('Set '+label+' to round '+n+(clearHigher?' (cleared later rounds)':'')+'.');
+}
+async function adminToggleRelease(formId,release){
+  release = (release===true||release==='true');
+  const r=sbOverview.find(x=>x.form_id===formId); const label=r?rcLabel(r):'form';
+  const {data,error}=await SB.from('forms').update({results_released:release}).eq('id',formId).select();
+  if(error){ alert('Could not change release: '+error.message); return; }
+  if(!data||!data.length){ alert('Not saved — permission issue on this form.'); return; }
+  if(formId===currentFormId){ cfg.resultsReleased=release; const fm=sbForms.find(f=>f.id===formId); if(fm)fm.results_released=release; }
+  await loadOverviewSB(); render();
+  toast((release?'Released':'Held')+' results for '+label+'.');
+}
+async function adminSetAllRounds(){
+  const v=prompt('Set EVERY form to which round number?'); if(v==null) return;
+  const n=parseInt(v,10); if(isNaN(n)||n<1){ alert('Enter a round number of 1 or more.'); return; }
+  if(!confirm('Set ALL forms to round '+n+' and hold results? (Bookmarks already placed in any round are kept.)')) return;
+  let ok=0; const failed=[];
+  for(const r of sbOverview){ const newRounds=Math.max((r.rounds||cfg.rounds||1),n);
+    const {error}=await SB.from('forms').update({current_round:n, rounds:newRounds, results_released:false}).eq('id',r.form_id);
+    if(error){ console.error('set all round',r.form_id,error); failed.push(rcLabel(r)); } else ok++; }
+  await loadOverviewSB(); render();
+  if(failed.length) alert('Set '+ok+' form(s). Failed '+failed.length+': '+failed.slice(0,8).join(', ')); else toast('Set all '+ok+' forms to round '+n+'.');
+}
+
 /* ---------- Reports & Export (technical-report tables) ---------- */
 let reportRaw=null;   // {bm:[...], impact:[...]} for the active form
 async function loadReportSB(){
@@ -940,6 +1012,18 @@ function r1(x){return x==null||isNaN(x)?'':Math.round(x*10)/10;}
    (decimals like -7.05) so we must NOT round to whole numbers. Default 2 dp;
    trailing zeros trimmed (5 -> "5", -3.40 -> "-3.4"). */
 function fmtScale(x){ if(x==null||isNaN(x))return '—'; const d=(cfg&&cfg.booklet&&cfg.booklet.scaleDecimals!=null)?cfg.booklet.scaleDecimals:2; return Number(x).toFixed(d); }
+function setScaleDecimals(v){ let n=parseInt(v,10); if(isNaN(n))return; n=Math.max(0,Math.min(4,n)); cfg.booklet=cfg.booklet||{}; cfg.booklet.scaleDecimals=n; }
+/* H3: reduce-based min/max — Math.max(...arr) can throw RangeError on very large
+   arrays and returns -Infinity on []. seed is an optional starting value. */
+function arrMax(a,seed){ let m=(seed===undefined?-Infinity:seed); for(let i=0;i<a.length;i++){ if(a[i]>m)m=a[i]; } return m; }
+function arrMin(a,seed){ let m=(seed===undefined? Infinity:seed); for(let i=0;i<a.length;i++){ if(a[i]<m)m=a[i]; } return m; }
+/* L1: guarantee a unique, valid (<=31 char) Excel sheet name within a workbook. */
+function uniqueSheetName(wb, base){
+  let name=String(base||'Sheet').replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Sheet';
+  if(!wb.SheetNames.includes(name)) return name;
+  for(let k=2;k<1000;k++){ const suf=' ('+k+')'; const n=name.slice(0,31-suf.length)+suf; if(!wb.SheetNames.includes(n)) return n; }
+  return name.slice(0,28)+Math.floor(Math.random()*900+100);
+}
 function roundCutScale(rnd){const out=[];for(let c=1;c<=nCuts();c++){const v=reportRaw.bm.filter(b=>b.round===rnd&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score);out.push(_med(v));}return out;}
 function impactFor(cutScales){
   const dist=reportRaw.impact; if(!dist||!dist.length) return null;
@@ -956,7 +1040,7 @@ function impactFor(cutScales){
 }
 function reportTables(){
   if(!reportRaw) return [];
-  const R=Math.max(cfg.rounds||1, ...reportRaw.bm.map(b=>b.round||1), 1);
+  const R=arrMax(reportRaw.bm.map(b=>b.round||1), Math.max(cfg.rounds||1,1));
   const nc=nCuts();
   const cutLabel=c=>'Cut '+c+': '+cfg.levels[c-1].name+' → '+cfg.levels[c].name;
   const tables=[];
@@ -971,13 +1055,13 @@ function reportTables(){
   (()=>{ const aoa=[['Round','Cut','n','Median','Min','Max','Range','SD']];
     for(let r=1;r<=R;r++) for(let c=1;c<=nc;c++){
       const v=reportRaw.bm.filter(b=>b.round===r&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score);
-      if(!v.length) continue; const mn=Math.min(...v),mx=Math.max(...v);
+      if(!v.length) continue; const mn=arrMin(v),mx=arrMax(v);
       aoa.push([r,c,v.length,r1(_med(v)),r1(mn),r1(mx),r1(mx-mn),r1(_sd(v))]); }
     tables.push({title:'Panelist Agreement / Spread',aoa}); })();
   // 3) Impact data
   (()=>{ const head=['Round',...cfg.levels.map(l=>l.name+' (%)')]; const aoa=[head];
     for(let r=1;r<=R;r++){ const pct=impactFor(roundCutScale(r)); aoa.push(['Round '+r,...(pct?pct.map(p=>r1(p)):cfg.levels.map(()=>'—'))]); }
-    tables.push({title:'Impact Data (percent of students by level)',aoa}); })();
+    tables.push({title:'Impact Data (percent of students by level; a student exactly at a cut is counted in the HIGHER level)',aoa}); })();
   // 4) Medians by table (final round)
   (()=>{ const fr=R;
     const ts=[...new Set(reportRaw.bm.filter(b=>b.round===fr).map(b=>(b.panelists&&b.panelists.table_no)||'—'))].sort();
@@ -1031,7 +1115,7 @@ async function exportReportXLSX(){
   await loadReportSB();   // always export the CURRENTLY selected booklet (form switch may not have reloaded it)
   const tables=reportTables(); if(!tables.length){alert('No data to export yet.');return;}
   const wb=XLSX.utils.book_new();
-  tables.forEach((t,i)=>{ const ws=XLSX.utils.aoa_to_sheet([[t.title],[],...t.aoa]); XLSX.utils.book_append_sheet(wb,ws,'Table '+(i+1)); });
+  tables.forEach((t,i)=>{ const ws=XLSX.utils.aoa_to_sheet([[t.title],[],...t.aoa]); XLSX.utils.book_append_sheet(wb,ws,uniqueSheetName(wb,'Table '+(i+1))); });
   XLSX.writeFile(wb, reportFileBase()+'.xlsx');
 }
 async function exportReportDoc(){
@@ -1087,7 +1171,7 @@ function crossGradeTables(){
     if(!forms.length) return;
     const head=['Grade']; for(let c=1;c<=nc;c++)head.push('Cut '+c+': '+cfg.levels[c-1].name+' → '+cfg.levels[c].name);
     const aoa=[head];
-    forms.forEach(f=>{ const maxR=Math.max(1,...f.bm.map(b=>b.round||1)); const row=[f.grade||f.name||'—'];
+    forms.forEach(f=>{ const maxR=arrMax(f.bm.map(b=>b.round||1),1); const row=[f.grade||f.name||'—'];
       for(let c=1;c<=nc;c++){ const v=f.bm.filter(b=>b.round===maxR&&b.cut_number===c&&b.scale_score!=null).map(b=>+b.scale_score); row.push(v.length?fmtScale(_med(v)):''); }
       aoa.push(row); });
     out.push({title:'Final Cut Scores by Grade — '+ca, aoa});
@@ -1109,12 +1193,12 @@ async function exportAllXLSX(){
   await loadReportAllSB();   // always export fresh data for every grade
   if(!reportAll){alert('Report data is still loading — try again in a moment.');return;}
   const wb=XLSX.utils.book_new();
-  crossGradeTables().forEach((t,i)=>{ const ws=XLSX.utils.aoa_to_sheet([[t.title],[],...t.aoa]); XLSX.utils.book_append_sheet(wb,ws,('Summary '+(i+1)).slice(0,31)); });
+  crossGradeTables().forEach((t,i)=>{ const ws=XLSX.utils.aoa_to_sheet([[t.title],[],...t.aoa]); XLSX.utils.book_append_sheet(wb,ws,uniqueSheetName(wb,'Summary '+(i+1))); });
   reportAll.forEach((f,i)=>{ if(!f.bm.length) return;
     let aoa=[[(f.content_area||'')+' · '+(f.grade||f.name||'')],[]];
     reportTablesFor(f).forEach(t=>{ aoa.push([t.title]); aoa.push(...t.aoa); aoa.push([]); });
     const ws=XLSX.utils.aoa_to_sheet(aoa);
-    XLSX.utils.book_append_sheet(wb,ws,('F'+(i+1)+' '+(f.grade||'')).replace(/[^A-Za-z0-9 ]/g,'').slice(0,31)); });
+    XLSX.utils.book_append_sheet(wb,ws,uniqueSheetName(wb,('F'+(i+1)+' '+(f.grade||'')).replace(/[^A-Za-z0-9 ]/g,''))); });
   if(!wb.SheetNames.length){alert('No data to export yet.');return;}
   XLSX.writeFile(wb,'StandardSetting_AllGrades.xlsx');
 }
@@ -1349,7 +1433,18 @@ async function onImportItemMap(input){
   if(!newItems.length){alert('No item rows found below the header.');return;}
   newItems.sort((a,b)=>a.pos-b.pos);
   const lbl=k=>m[k]>=0?('"'+imNorm(headers[m[k]]).slice(0,28)+'"'):'(none)';
-  const msg='Detected columns:\n  order = '+lbl('order')+'\n  item id = '+lbl('item_id')+'\n  scale = '+lbl('scale')+'\n  score point = '+lbl('score_point')+'\n  standard = '+lbl('standard')+'\n  item type = '+lbl('item_type')+'\n  key = '+lbl('key')+'\n\n'+newItems.length+' items found. Import and replace the current booklet?';
+  // C1: a missing or partly-blank scale column silently produces blank/NULL cut
+  // scores (Postgres percentile_cont ignores NULLs). Warn loudly before importing.
+  const nullScale=newItems.filter(it=>it.scale==null).length;
+  let scaleWarn='';
+  if(m.scale<0) scaleWarn='\n\n⚠ NO SCALE / RP COLUMN was detected. Every cut score for this booklet will be BLANK. Fix the header row before importing — do not proceed for a live study.';
+  else if(nullScale>0) scaleWarn='\n\n⚠ '+nullScale+' of '+newItems.length+' items have a BLANK scale value. Those positions will not contribute to medians. Check the file before importing.';
+  // Ordered-booklet check: RP/scale should not DECREASE as OIB order increases.
+  // Ties are allowed; a drop signals a data error or the wrong scale column.
+  let prevScale=null; const outOfOrder=[];
+  newItems.forEach(it=>{ if(it.scale!=null){ if(prevScale!=null && it.scale<prevScale) outOfOrder.push(it.pos); prevScale=it.scale; } });
+  if(outOfOrder.length) scaleWarn+='\n\n⚠ '+outOfOrder.length+' item(s) have an RP value LOWER than an earlier item (order position'+(outOfOrder.length>1?'s ':' ')+outOfOrder.slice(0,12).join(', ')+(outOfOrder.length>12?' …':'')+'). In an ordered booklet RP should increase with order — check the scale column and the order before importing.';
+  const msg='Detected columns:\n  order = '+lbl('order')+'\n  item id = '+lbl('item_id')+'\n  scale = '+lbl('scale')+'\n  score point = '+lbl('score_point')+'\n  standard = '+lbl('standard')+'\n  item type = '+lbl('item_type')+'\n  key = '+lbl('key')+scaleWarn+'\n\n'+newItems.length+' items found. Import and replace the current booklet?';
   if(!confirm(msg))return;
   // Preserve existing item images on re-import: carry the picture link forward
   // for any position that already had one, so re-importing a map (e.g. to fix
@@ -1357,8 +1452,29 @@ async function onImportItemMap(input){
   const oldImgByPos={}; (oib||[]).forEach(it=>{ if(it&&it.display&&it.display.mode==='image'&&(it.display.path||it.display.src)) oldImgByPos[it.pos]=it.display; });
   let _carried=0; newItems.forEach(it=>{ if(oldImgByPos[it.pos]){ it.display=oldImgByPos[it.pos]; _carried++; } });
   oib=newItems; saveOIB(); initBookmarks(); reviewIdx=0; render();
-  if(USE_SB){ const ok=await saveItemsSB(); if(ok){ toast('✓ Item map uploaded — '+newItems.length+' items saved'+(_carried?' ('+_carried+' images kept)':'')); } else { alert('Imported locally, but the database save failed.'); } }
+  if(USE_SB){ const ok=await saveItemsSB(); if(ok){
+      // C2: realign any bookmarks already placed on this form to the new scale
+      // values, so re-importing to fix scales also fixes the cut scores/medians.
+      let fixedMsg='';
+      try{ const fixed=await recomputeBookmarkScales(currentFormId); if(fixed) fixedMsg=' · realigned '+fixed+' existing cut(s) to the new scale'; }
+      catch(e){ console.error('recompute scales after import',e); }
+      try{ await loadMediansSB(); }catch(e){}
+      toast('✓ Item map uploaded — '+newItems.length+' items saved'+(_carried?' ('+_carried+' images kept)':'')+fixedMsg);
+    } else { alert('Imported locally, but the database save failed.'); } }
   else toast('✓ Imported '+newItems.length+' items (local)');
+}
+/* C2 helper: after an item-map (re)import, re-derive bookmarks.scale_score from
+   the new items.scale for this form. One update per distinct position (~item count). */
+async function recomputeBookmarkScales(formId){
+  if(!USE_SB||!formId) return 0;
+  const its=await fetchAllSB('items','pos,scale',q=>q.eq('form_id',formId));
+  let n=0;
+  for(const it of its){
+    if(it.scale==null) continue;
+    const {error,count}=await SB.from('bookmarks').update({scale_score:it.scale},{count:'exact'}).eq('form_id',formId).eq('item_pos',it.pos);
+    if(error){ console.error('recompute scale pos',it.pos,error); } else { n+=(count||0); }
+  }
+  return n;
 }
 async function signImages(){
   if(!USE_SB)return;
@@ -1493,6 +1609,8 @@ function setup(){
   <div class="card"><h3>Options</h3>
     <label style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px"><input type="checkbox" ${cfg.showImpact!==false?'checked':''} onchange="cf('showImpact',this.checked)"> Show impact data to panelists <span class="legend" style="margin:0">(uncheck if this study doesn&#699;t use impact)</span></label>
     <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;margin-top:8px"><input type="checkbox" ${cfg._wsRequireOIB!==false?'checked':''} onchange="cf('_wsRequireOIB',this.checked)"> Require panelists to write OIB notes before bookmarks <span class="legend" style="margin:0">(workshop default — uncheck to let panelists skip the two OIB questions; individual grades can override)</span></label>
+    <div style="margin-top:10px;font-size:13.5px"><label>Decimal places for scale / cut scores: <input type="number" min="0" max="4" step="1" value="${(cfg.booklet&&cfg.booklet.scaleDecimals!=null?cfg.booklet.scaleDecimals:2)}" style="width:60px" oninput="setScaleDecimals(this.value)"></label> <span class="legend" style="margin-left:6px">e.g. 2 → −7.05, 0 → whole numbers. Applies to all medians, panelist views, and exports.</span></div>
+    <div style="margin-top:8px"><button class="cta ghost small" onclick="render()">Preview formatting</button></div>
     <div class="legend" style="margin-top:6px">Remember to <b>Save workshop to database</b> for this to apply to everyone.</div>
   </div>
   <div class="card"><h3>Item map columns (panelist view)</h3>
@@ -1713,6 +1831,7 @@ async function refreshNow(){
       await loadMediansSB();
     } else {
       const prevRound=cfg.currentRound;
+      flushPendingNotes();   // M5: persist any debounced notes before we may reload state
       await refreshFormMeta();
       if(cfg.currentRound!==prevRound){ try{ await loadProgressSB(); }catch(e){} }  // new round → carry forward
       await loadMediansSB();
@@ -1729,6 +1848,7 @@ function startAutoRefresh(){
     try{
       if(userRole==='panelist'){
         if(!currentFormId) return;
+        if(hasPendingEdits()) return;   // M5: skip this cycle while the panelist has unsaved/in-flight edits
         const {data:fm}=await SB.from('forms').select('current_round,results_released,status').eq('id',currentFormId).maybeSingle();
         if(!fm) return;
         const changed = (!!fm.results_released)!==!!cfg.resultsReleased
@@ -1794,6 +1914,7 @@ async function loadFromSupabase(){
     if(ws.grades&&ws.grades.length)cfg.grades=ws.grades;
     if(ws.greeting)cfg.greeting=ws.greeting;
     if(ws.grade_label)cfg.gradeLabel=ws.grade_label;
+    if(ws.scale_decimals!=null){ cfg.booklet=cfg.booklet||{}; cfg.booklet.scaleDecimals=ws.scale_decimals; }
     if(ws.item_map_columns)cfg.itemMapColumns=ws.item_map_columns;}
   const {data:lv}=await SB.from('achievement_levels').select('*').eq('workshop_id',W).order('ordinal');
   if(lv&&lv.length) cfg.levels=lv.map(l=>({name:l.name,short:l.short_label,color:l.color,descriptor:l.descriptor}));
@@ -1881,7 +2002,7 @@ async function loadProgressSB(){
   const anyThisRound=Object.values(bookmarks).some(v=>v!=null);
   if(!anyThisRound && cfg.currentRound>1 && !panelEditLocked()){
     const {data:prev}=await SB.from('bookmarks').select('cut_number,item_pos').eq('panelist_id',myPanelistId).eq('form_id',currentFormId).eq('round',cfg.currentRound-1);
-    if(prev&&prev.length){ prev.forEach(x=>{bookmarks[x.cut_number]=x.item_pos;}); carriedForward=true; }
+    if(prev&&prev.length){ const N=itemCount(); prev.forEach(x=>{ let p=x.item_pos; if(p!=null&&N>0&&p>N)p=N; bookmarks[x.cut_number]=p; }); carriedForward=true; }   // L4: clamp to current booklet length (a re-import may have shrunk it)
   }
   // load this panelist's cuts across ALL rounds (for the "earlier rounds" reference)
   myRoundCuts={};
@@ -1893,17 +2014,34 @@ async function loadProgressSB(){
 }
 async function saveAnsSB(pos){
   const it=itemAt(pos); if(!it||!it.id)return; const a=answers[pos]||{};
-  const {error}=await SB.from('oib_responses').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,item_id:it.id,measures:a.measures||'',why_harder:a.harder||'',updated_at:new Date().toISOString()},{onConflict:'panelist_id,item_id'});
-  if(error)console.error('save note failed',error);
+  _savesInFlight++;
+  try{
+    const {error}=await SB.from('oib_responses').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,item_id:it.id,measures:a.measures||'',why_harder:a.harder||'',updated_at:new Date().toISOString()},{onConflict:'panelist_id,item_id'});
+    if(error){ console.error('save note failed',error); toast('⚠ A note didn’t save — check your connection.'); }
+  } finally { _savesInFlight--; }
 }
 async function saveBmSB(c){
-  const it=itemAt(bookmarks[c]);
-  const {error}=await SB.from('bookmarks').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,round:cfg.currentRound,cut_number:c,item_pos:bookmarks[c],scale_score:it?it.scale:null},{onConflict:'panelist_id,form_id,round,cut_number'});
-  if(error)console.error('save bookmark failed',error);
+  const pos=bookmarks[c];
+  _savesInFlight++;
+  try{
+    // C3: take the scale from the DATABASE at save time (join items on form_id,pos),
+    // not the in-memory booklet which can be stale/empty on a form switch or fac path.
+    let scale=null;
+    if(pos!=null){
+      const {data:itrow}=await SB.from('items').select('scale').eq('form_id',currentFormId).eq('pos',pos).maybeSingle();
+      scale = itrow ? itrow.scale : (itemAt(pos) ? itemAt(pos).scale : null);
+    }
+    const {error}=await SB.from('bookmarks').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,round:cfg.currentRound,cut_number:c,item_pos:pos,scale_score:scale},{onConflict:'panelist_id,form_id,round,cut_number'});
+    if(error){ console.error('save bookmark failed',error); toast('⚠ Your cut didn’t save — check your connection and try again.'); return false; }
+    return true;
+  } finally { _savesInFlight--; }
 }
 async function saveSurveySB(){
-  const {error}=await SB.from('survey_responses').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,round:cfg.currentRound,question_key:'readiness',answer:String(surveyState.q1)},{onConflict:'panelist_id,form_id,round,question_key'});
-  if(error)console.error('save survey failed',error);
+  _savesInFlight++;
+  try{
+    const {error}=await SB.from('survey_responses').upsert({workshop_id:wid(),group_id:currentGroupId,form_id:currentFormId,panelist_id:myPanelistId,round:cfg.currentRound,question_key:'readiness',answer:String(surveyState.q1)},{onConflict:'panelist_id,form_id,round,question_key'});
+    if(error){ console.error('save survey failed',error); toast('⚠ Your survey answer didn’t save — check your connection.'); }
+  } finally { _savesInFlight--; }
 }
 let sbImpact=[];
 async function loadMediansSB(){
@@ -2013,10 +2151,18 @@ async function deleteFormSB(fid){
   render(); toast('Form deleted.');
 }
 async function advanceAllRoundsSB(){
-  if(!confirm('Advance EVERY form to its next round? (Group results will be turned off for the new round.)'))return;
-  for(const r of sbOverview){ const nr=(r.current_round||1)+1; await SB.from('forms').update({current_round:nr, rounds:Math.max(r.current_round||1,nr), results_released:false}).eq('id',r.form_id); }
+  // H5: this bumps EVERY form to a new empty round and hides released results —
+  // require an explicit typed confirmation, and report exactly what changed.
+  const typed=prompt('This advances EVERY form to its next round and HIDES all released results. This cannot be undone in one click.\n\nType ADVANCE to confirm:');
+  if(String(typed||'').trim().toUpperCase()!=='ADVANCE'){ toast('Cancelled — nothing changed.'); return; }
+  let ok=0; const failed=[];
+  for(const r of sbOverview){ const nr=(r.current_round||1)+1;
+    const {error}=await SB.from('forms').update({current_round:nr, rounds:Math.max(r.current_round||1,nr), results_released:false}).eq('id',r.form_id);
+    if(error){ console.error('advance form',r.form_id,error); failed.push(r.grade||r.form_id); } else { ok++; }
+  }
   await loadOverviewSB(); render();
-  toast('Advanced all forms to their next round (results held).');
+  if(failed.length) alert('Advanced '+ok+' form(s). FAILED to advance '+failed.length+': '+failed.slice(0,10).join(', ')+'. Re-check those forms.');
+  else toast('Advanced all '+ok+' forms to their next round (results held).');
 }
 async function loadResponsesSB(){
   const {data,error}=await SB.from('oib_responses').select('item_id,measures,why_harder,panelists(first_name,last_name)').eq('form_id',currentFormId);
@@ -2032,7 +2178,7 @@ async function loadResponsesSB(){
 /* ---------- facilitator setup writes ---------- */
 async function saveWorkshopSB(){
   const W=wid();
-  const {error}=await SB.from('workshops').update({title:cfg.workshopTitle,subtitle:cfg.subtitle,content_area:cfg.contentArea,grade:cfg.grade,rounds:cfg.rounds,current_round:cfg.currentRound,require_oib_complete:(cfg._wsRequireOIB!=null?cfg._wsRequireOIB:cfg.requireOIBComplete)!==false,show_impact:cfg.showImpact!==false,content_areas:cfg.contentAreas||[],grades:cfg.grades||[],greeting:cfg.greeting||'Hello',grade_label:cfg.gradeLabel||'Grade',item_map_columns:cfg.itemMapColumns||IMCOL_DEFAULT}).eq('id',W);
+  const {error}=await SB.from('workshops').update({title:cfg.workshopTitle,subtitle:cfg.subtitle,content_area:cfg.contentArea,grade:cfg.grade,rounds:cfg.rounds,current_round:cfg.currentRound,require_oib_complete:(cfg._wsRequireOIB!=null?cfg._wsRequireOIB:cfg.requireOIBComplete)!==false,show_impact:cfg.showImpact!==false,content_areas:cfg.contentAreas||[],grades:cfg.grades||[],greeting:cfg.greeting||'Hello',grade_label:cfg.gradeLabel||'Grade',scale_decimals:(cfg.booklet&&cfg.booklet.scaleDecimals!=null?cfg.booklet.scaleDecimals:2),item_map_columns:cfg.itemMapColumns||IMCOL_DEFAULT}).eq('id',W);
   if(error){alert('Save failed: '+error.message);return;}
   await SB.from('achievement_levels').delete().eq('workshop_id',W);
   const rows=cfg.levels.map((l,i)=>({workshop_id:W,ordinal:i+1,name:l.name,short_label:l.short,color:l.color,descriptor:l.descriptor}));
@@ -2047,14 +2193,16 @@ async function saveItemsSB(){
     display_mode:it.display?it.display.mode:'hidden',
     display_json: (it.display&&it.display.mode==='json')? Object.assign({stem:it.display.stem||''}, it.display.options?{options:it.display.options}:{}) : null,
     image_path: (it.display&&it.display.mode==='image')? (it.display.path||it.display.src) : null}));
+  // M2: UPSERT FIRST, then prune — so a failed save can never leave the form
+  // with items deleted-but-not-replaced. Only integer positions are kept.
+  const {error}=await SB.from('items').upsert(rows,{onConflict:'form_id,pos'});
+  if(error){alert('Items save failed: '+error.message);return false;}
   // remove any items in this form that are no longer in the imported map (e.g., items you deleted)
-  const positions=rows.map(r=>r.pos);
+  const positions=rows.map(r=>r.pos).filter(p=>Number.isInteger(p));
   if(positions.length){
     const {error:de}=await SB.from('items').delete().eq('form_id',currentFormId).not('pos','in','('+positions.join(',')+')');
     if(de) console.error('prune old items',de);
   }
-  const {error}=await SB.from('items').upsert(rows,{onConflict:'form_id,pos'});
-  if(error){alert('Items save failed: '+error.message);return false;}
   return true;
 }
 async function saveItemsSBButton(){ if(await saveItemsSB()) alert('Saved '+itemCount()+' items to the database.'); }
