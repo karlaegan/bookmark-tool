@@ -245,7 +245,15 @@ let ansTimer={};
 let _savesInFlight=0;
 function hasPendingEdits(){ return _savesInFlight>0 || Object.values(ansTimer).some(t=>t); }
 function flushPendingNotes(){ Object.keys(ansTimer).forEach(p=>{ if(ansTimer[p]){ clearTimeout(ansTimer[p]); ansTimer[p]=null; if(typeof saveAnsSB==='function') saveAnsSB(+p); } }); }
-function wid(){return window.SUPABASE_CONFIG.workshopId;}
+function wid(){
+  // Allow a ?wf=<uuid> override so a SEPARATE test/QA workshop can run on the same
+  // site+database without touching the configured (NZ) workshop. Falls back to the
+  // configured workshop when absent or not a valid uuid. RLS keeps workshops isolated.
+  try{ const q=new URLSearchParams(location.search).get('wf');
+    if(q && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(q)) return q;
+  }catch(e){}
+  return window.SUPABASE_CONFIG.workshopId;
+}
 
 function loadCfg(){
   const saved=localStorage.getItem(LS_KEY);
@@ -920,10 +928,28 @@ function overview(){
   return `<h2 class="h">Workshop dashboard</h2>
   <p class="lede">Where every form is in the process. Forms marked <span class="answered">ready</span> have all panelists finished studying — good candidates to start bookmark training together.</p>
   ${readyCount?`<div class="callout"><b>${readyCount}</b> form(s) have all panelists finished studying.</div>`:''}
-  <div style="margin-bottom:12px"><button class="cta ghost" onclick="advanceAllRoundsSB()">Advance all forms to next round</button> <span class="legend">Click a row to open that form's panel progress; advance individual rounds on each form's Results &amp; Release.</span></div>
+  <div style="margin-bottom:12px"><button class="cta ghost" onclick="advanceAllRoundsSB()">Advance all forms to next round</button> <button class="cta ghost" onclick="createWorkshopUI()">+ New workshop</button> <span class="legend">Click a row to open that form's panel progress; advance individual rounds on each form's Results &amp; Release.</span></div>
   <div class="card"><table>
     <thead><tr><th style="text-align:left">Room</th><th style="text-align:left">Form</th><th>Panelists</th><th>Finished studying</th><th>Round</th><th>Bookmarked</th><th>Results</th><th>Stage</th><th style="text-align:left">Low readiness</th>${isAdmin()?'<th></th>':''}</tr></thead>
     <tbody>${trs||'<tr><td colspan="'+ncol+'" style="color:#bbb">No forms yet.</td></tr>'}</tbody></table></div>`;
+}
+
+/* ---------- Create a brand-new, isolated workshop (admin) ---------- */
+async function createWorkshopUI(){
+  if(!isAdmin()){ alert('Admins only.'); return; }
+  if(!USE_SB){ alert('Requires the database connection.'); return; }
+  const title=prompt('Name for the new workshop (e.g. "SMART 2026 — Reading"):'); if(title==null) return;
+  if(!title.trim()){ alert('Please enter a name.'); return; }
+  const sub=prompt('Subtitle / date (optional):'); if(sub==null) return;
+  const {data,error}=await SB.rpc('create_workshop',{p_title:title.trim(),p_subtitle:(sub||'').trim()});
+  if(error){ alert('Could not create the workshop: '+error.message); return; }
+  const id=data; const url=location.origin+location.pathname+'?wf='+id;
+  let copied=false; try{ await navigator.clipboard.writeText(url); copied=true; }catch(e){}
+  if(confirm('Created “'+title.trim()+'”.'+(copied?' (link copied)':'')+'\n\nOpen it now as its admin?\n\n'+url)){
+    location.href=url;
+  } else {
+    toast('Workshop created'+(copied?' — link copied to clipboard.':'. Link: '+url));
+  }
 }
 
 /* ---------- Round control (admin): open/reopen/advance rounds per form ---------- */
